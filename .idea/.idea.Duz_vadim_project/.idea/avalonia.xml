@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AvaloniaProject">
+    <option name="projectPerEditor">
+      <map>
+        <entry key="UI/App.axaml" value="UI/UI.csproj" />
+        <entry key="UI/Views/EditFishWindows/EditBreamWindow.axaml" value="UI/UI.csproj" />
+        <entry key="UI/Views/EditFishWindows/EditCarpWindow.axaml" value="UI/UI.csproj" />
+        <entry key="UI/Views/EditFishWindows/EditMackerelWindow.axaml" value="UI/UI.csproj" />
+        <entry key="UI/Views/EditFishWindows/EditTunaWindow.axaml" value="UI/UI.csproj" />
+        <entry key="UI/Views/MainWindow.axaml" value="UI/UI.csproj" />
+      </map>
+    </option>
+  </component>
+</project>

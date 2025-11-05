@@ -1,0 +1,97 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:UI.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="UI.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="Рыбы">
+  
+
+  <DockPanel Margin="8">
+    <!-- Верхняя панель кнопок -->
+    <DockPanel Margin="0,0,0,8" DockPanel.Dock="Top">
+      <StackPanel Orientation="Horizontal" Spacing="4">
+        <ComboBox x:Name="FactorySelector" SelectedIndex="0" SelectionChanged="OnFactorySelectorChanged">
+          <ComboBoxItem Content="Carp and Mackerel Factory" />
+          <ComboBoxItem Content="Bream and Tuna Factory" />
+          <ComboBoxItem Content="Bream and Tuna Prototype Factory" />
+          <ComboBoxItem Content="Carp and Mackerel Prototype Factory" />
+        </ComboBox>
+        
+        <Button Command="{Binding AddFreshwaterFishCommand}" Content="Добавить пресноводную рыбу" />
+        <Button Command="{Binding AddSaltwaterFishCommand}" Content="Добавить морскую рыбу" />
+        
+        <Button
+          Command="{Binding EditCommand}"
+          Content="Изменить"
+          IsEnabled="{Binding CanEditOrDelete}" />
+        <Button
+          Command="{Binding DeleteCommand}"
+          Content="Удалить"
+          IsEnabled="{Binding CanEditOrDelete}" />
+      </StackPanel>
+
+      <Button
+        HorizontalAlignment="Right"
+        Command="{Binding GenerateTestFishCommand}"
+        Content="Генерировать тестовые записи"
+        DockPanel.Dock="Right" />
+    </DockPanel>
+
+    <!-- Таблица с данными -->
+    <DataGrid
+      AutoGenerateColumns="False"
+      CanUserResizeColumns="True"
+      CanUserSortColumns="True"
+      GridLinesVisibility="Horizontal"
+      HeadersVisibility="Column"
+      IsReadOnly="True"
+      ItemsSource="{Binding FishList}"
+      RowHeight="30"
+      SelectedItem="{Binding SelectedFish, Mode=TwoWay}">
+      <DataGrid.Columns>
+        <DataGridTextColumn
+          Width="*"
+          MinWidth="100"
+          Binding="{Binding Weight}"
+          Header="Вес (г)" />
+        <DataGridTextColumn
+          Width="Auto"
+          MinWidth="100"
+          Binding="{Binding Age}"
+          Header="Возраст (лет)" />
+        <DataGridTextColumn
+          Width="Auto"
+          MinWidth="100"
+          Binding="{Binding IsEdible}"
+          Header="Съедобная" />
+        <DataGridTextColumn
+          Width="Auto"
+          MinWidth="200"
+          Binding="{Binding TypeName}"
+          Header="Тип рыбы" />
+      </DataGrid.Columns>
+
+      <DataGrid.ContextMenu>
+        <ContextMenu>
+          <MenuItem Header="Добавить">
+            <MenuItem Command="{Binding AddFreshwaterFishCommand}" Header="Пресноводную рыбу" />
+            <MenuItem Command="{Binding AddSaltwaterFishCommand}" Header="Морскую рыбу" />
+          </MenuItem>
+          <MenuItem
+            Command="{Binding EditCommand}"
+            Header="Изменить"
+            IsEnabled="{Binding CanEditOrDelete}" />
+          <MenuItem
+            Command="{Binding DeleteCommand}"
+            Header="Удалить"
+            IsEnabled="{Binding CanEditOrDelete}" />
+          <MenuItem Command="{Binding GenerateTestFishCommand}" Header="Сгенерировать тестовые записи" />
+        </ContextMenu>
+      </DataGrid.ContextMenu>
+    </DataGrid>
+  </DockPanel>
+</Window>
