@@ -7,7 +7,7 @@ using Avalonia.Threading;
 namespace ProgressDisplay;
 
 /// <summary>
-/// Provides an API for showing and interacting with the reusable progress window.
+/// Предоставляет API для отображения и управления универсальным окном прогресса.
 /// </summary>
 public sealed class ProgressFormController
 {
@@ -22,22 +22,22 @@ public sealed class ProgressFormController
     private bool _cancelRaised;
 
     /// <summary>
-    /// Occurs when the operation should be cancelled.
+    /// Событие, генерируемое при необходимости отменить выполняемую операцию.
     /// </summary>
     public event EventHandler? OperationCancelled;
 
     /// <summary>
-    /// Occurs when the form is closed after reaching the maximum number of records.
+    /// Событие, возникающее при закрытии формы после достижения максимального числа записей.
     /// </summary>
     public event EventHandler? FormClosed;
 
     /// <summary>
-    /// Initializes and shows the progress form.
+    /// Инициализирует и отображает форму прогресса.
     /// </summary>
-    /// <param name="title">Window title.</param>
-    /// <param name="caption">Caption text displayed inside the form.</param>
-    /// <param name="maximum">Maximum number of records to process.</param>
-    /// <param name="completionMode">Defines behaviour after reaching the maximum value.</param>
+    /// <param name="title">Заголовок окна.</param>
+    /// <param name="caption">Подпись, отображаемая внутри формы.</param>
+    /// <param name="maximum">Максимальное количество обрабатываемых записей.</param>
+    /// <param name="completionMode">Определяет поведение после достижения максимального значения.</param>
     public void Initialize(string title, string caption, double maximum, ProgressCompletionMode completionMode)
     {
         if (maximum <= 0)
@@ -89,11 +89,11 @@ public sealed class ProgressFormController
     }
 
     /// <summary>
-    /// Reports progress to the form.
+    /// Передаёт форме сведения о продвижении выполнения.
     /// </summary>
-    /// <param name="processedCount">Number of processed records. Defaults to 1.</param>
-    /// <param name="newCaption">Optional new caption.</param>
-    /// <returns><c>true</c> if the caller should stop processing; otherwise <c>false</c>.</returns>
+    /// <param name="processedCount">Количество обработанных записей. По умолчанию — 1.</param>
+    /// <param name="newCaption">Необязательная новая подпись.</param>
+    /// <returns><c>true</c>, если вызывающему коду следует прекратить обработку; иначе <c>false</c>.</returns>
     public bool ReportProgress(double processedCount = 1, string? newCaption = null)
     {
         if (processedCount < 0)
@@ -131,7 +131,7 @@ public sealed class ProgressFormController
     }
 
     /// <summary>
-    /// Closes the progress form.
+    /// Закрывает форму прогресса.
     /// </summary>
     public void Close()
     {

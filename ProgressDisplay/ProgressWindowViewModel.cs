@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 namespace ProgressDisplay;
 
 /// <summary>
-/// View model for the progress window that exposes state to the UI.
+/// Модель представления окна прогресса, предоставляющая состояние пользовательскому интерфейсу.
 /// </summary>
 public sealed class ProgressWindowViewModel : INotifyPropertyChanged
 {
@@ -19,7 +19,7 @@ public sealed class ProgressWindowViewModel : INotifyPropertyChanged
     public event PropertyChangedEventHandler? PropertyChanged;
 
     /// <summary>
-    /// Gets or sets the caption displayed above the progress bar.
+    /// Заголовок, отображаемый над индикатором выполнения.
     /// </summary>
     public string Caption
     {
@@ -28,7 +28,7 @@ public sealed class ProgressWindowViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Gets or sets additional details displayed below the progress bar.
+    /// Дополнительная подпись под индикатором выполнения.
     /// </summary>
     public string Details
     {
@@ -37,7 +37,7 @@ public sealed class ProgressWindowViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Gets or sets the maximum value of the progress bar.
+    /// Максимальное значение индикатора выполнения.
     /// </summary>
     public double ProgressMaximum
     {
@@ -46,7 +46,7 @@ public sealed class ProgressWindowViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Gets or sets the current value of the progress bar.
+    /// Текущее значение индикатора выполнения.
     /// </summary>
     public double ProgressValue
     {
@@ -55,7 +55,7 @@ public sealed class ProgressWindowViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Gets or sets the text displayed on the cancel button.
+    /// Текст, отображаемый на кнопке отмены.
     /// </summary>
     public string CancelButtonText
     {
@@ -64,7 +64,7 @@ public sealed class ProgressWindowViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Gets or sets a value indicating whether the cancel button is enabled.
+    /// Признак доступности кнопки отмены.
     /// </summary>
     public bool IsCancelEnabled
     {

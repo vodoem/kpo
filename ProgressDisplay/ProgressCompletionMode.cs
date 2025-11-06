@@ -1,17 +1,17 @@
 namespace ProgressDisplay;
 
 /// <summary>
-/// Defines how the progress form behaves once the maximum number of records is reached.
+/// Определяет поведение формы прогресса после достижения максимального количества записей.
 /// </summary>
 public enum ProgressCompletionMode
 {
     /// <summary>
-    /// The form closes automatically when the progress reaches the maximum value.
+    /// Форма закрывается автоматически, когда прогресс достигает максимума.
     /// </summary>
     AutoClose,
 
     /// <summary>
-    /// The form remains open and waits for the user to close it manually.
+    /// Форма остаётся открытой и ожидает, пока пользователь закроет её вручную.
     /// </summary>
     WaitForUserAction
 }

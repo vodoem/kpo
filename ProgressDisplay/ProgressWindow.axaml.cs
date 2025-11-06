@@ -5,17 +5,17 @@ using Avalonia.Interactivity;
 namespace ProgressDisplay;
 
 /// <summary>
-/// Interaction logic for the reusable progress window.
+/// Логика взаимодействия для универсального окна прогресса.
 /// </summary>
 public partial class ProgressWindow : Window
 {
     /// <summary>
-    /// Occurs when the cancel button is clicked.
+    /// Событие нажатия на кнопку отмены.
     /// </summary>
     public event EventHandler? CancelRequested;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ProgressWindow"/> class.
+    /// Создаёт новый экземпляр класса <see cref="ProgressWindow"/>.
     /// </summary>
     public ProgressWindow()
     {
