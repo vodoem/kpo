@@ -46,7 +46,7 @@
                 Height="32"
                 Content="{Binding CancelButtonText}"
                 IsEnabled="{Binding IsCancelEnabled}"
-                Click="OnCancelClicked" />
+                Command="{Binding CancelCommand}" />
       </StackPanel>
     </Grid>
   </Border>

@@ -64,6 +64,8 @@ public sealed class ProgressFormController
                 IsCancelEnabled = true
             };
 
+            _viewModel.CancellationRequested += OnCancellationRequested;
+
             _window = new ProgressWindow
             {
                 DataContext = _viewModel,
@@ -72,7 +74,6 @@ public sealed class ProgressFormController
                 WindowStartupLocation = WindowStartupLocation.CenterOwner
             };
 
-            _window.CancelRequested += OnCancelRequested;
             _window.Closing += OnWindowClosing;
             _window.Closed += OnWindowClosed;
 
@@ -160,7 +161,7 @@ public sealed class ProgressFormController
         }
     }
 
-    private void OnCancelRequested(object? sender, EventArgs e)
+    private void OnCancellationRequested(object? sender, EventArgs e)
     {
         if (_viewModel is null)
         {
@@ -210,9 +211,13 @@ public sealed class ProgressFormController
 
         if (_window != null)
         {
-            _window.CancelRequested -= OnCancelRequested;
             _window.Closing -= OnWindowClosing;
             _window.Closed -= OnWindowClosed;
+        }
+
+        if (_viewModel != null)
+        {
+            _viewModel.CancellationRequested -= OnCancellationRequested;
         }
 
         _window = null;
