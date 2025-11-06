@@ -1,12 +1,17 @@
-﻿using System;
-using System.Collections.ObjectModel;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using Avalonia.Threading;
 using Duz_vadim_project;
 using Duz_vadim_project.DesignPatterns;
 using Duz_vadim_project.DesignPatterns.FactoryMethod;
 using Duz_vadim_project.DesignPatterns.PrototypeFactory;
+using ProgressDisplay;
 using ReactiveUI;
 using UI.Generator;
 using UI.ViewModels.EditFish;
@@ -19,9 +24,19 @@ namespace UI.ViewModels;
 public partial class MainWindowViewModel : ViewModelBase
 {
     /// <summary>
-    /// Список рыб
+    /// Полный набор записей о рыбах.
     /// </summary>
-    public ObservableCollection<Fish> FishList { get; } = [];
+    private readonly List<Fish> _allFish = new();
+
+    /// <summary>
+    /// Текущий отфильтрованный список рыб.
+    /// </summary>
+    private List<Fish> _filteredFish = new();
+
+    /// <summary>
+    /// Возвращает текущий отфильтрованный список рыб для отображения в таблице.
+    /// </summary>
+    public IReadOnlyList<Fish> FishList => _filteredFish;
 
     /// <summary>
     /// Выбранная рыба
@@ -47,15 +62,71 @@ public partial class MainWindowViewModel : ViewModelBase
     public bool CanEditOrDelete => SelectedFish != null;
 
     /// <summary>
+    /// Текстовый фильтр по типу рыбы.
+    /// </summary>
+    private string _typeFilter = string.Empty;
+
+    /// <summary>
+    /// Текстовый фильтр по типу рыбы.
+    /// </summary>
+    public string TypeFilter
+    {
+        get => _typeFilter;
+        set => this.RaiseAndSetIfChanged(ref _typeFilter, value);
+    }
+
+    /// <summary>
+    /// Минимальный вес для фильтрации.
+    /// </summary>
+    private string _weightMinFilter = string.Empty;
+
+    /// <summary>
+    /// Минимальный вес для фильтрации.
+    /// </summary>
+    public string WeightMinFilter
+    {
+        get => _weightMinFilter;
+        set => this.RaiseAndSetIfChanged(ref _weightMinFilter, value);
+    }
+
+    /// <summary>
+    /// Максимальный вес для фильтрации.
+    /// </summary>
+    private string _weightMaxFilter = string.Empty;
+
+    /// <summary>
+    /// Максимальный вес для фильтрации.
+    /// </summary>
+    public string WeightMaxFilter
+    {
+        get => _weightMaxFilter;
+        set => this.RaiseAndSetIfChanged(ref _weightMaxFilter, value);
+    }
+
+    /// <summary>
+    /// Текущий текст, отображающий активный фильтр.
+    /// </summary>
+    private string _currentFilterSummary = "Без фильтра";
+
+    /// <summary>
+    /// Текущий текст, отображающий активный фильтр.
+    /// </summary>
+    public string CurrentFilterSummary
+    {
+        get => _currentFilterSummary;
+        private set => this.RaiseAndSetIfChanged(ref _currentFilterSummary, value);
+    }
+
+    /// <summary>
     /// Взаимодействие с диалогом редактирования рыбы
     /// </summary>
     public Interaction<ViewModelBase, Fish?> ShowEditFishDialog { get; }
-    
+
     /// <summary>
     /// Команда для добавления пресноводной рыбы
     /// </summary>
     public ReactiveCommand<Unit, Unit> AddFreshwaterFishCommand { get; }
-    
+
     /// <summary>
     /// Команда для добавления морской рыбы
     /// </summary>
@@ -77,6 +148,16 @@ public partial class MainWindowViewModel : ViewModelBase
     public ReactiveCommand<Unit, Unit> GenerateTestFishCommand { get; }
 
     /// <summary>
+    /// Команда применения фильтра.
+    /// </summary>
+    public ReactiveCommand<Unit, Unit> ApplyFilterCommand { get; }
+
+    /// <summary>
+    /// Команда сброса фильтра.
+    /// </summary>
+    public ReactiveCommand<Unit, Unit> ClearFilterCommand { get; }
+
+    /// <summary>
     /// Выбранная фабрика для создания объектов рыб
     /// </summary>
     private IFishFactory? _selectedFactory;
@@ -89,23 +170,28 @@ public partial class MainWindowViewModel : ViewModelBase
         get => _selectedFactory;
         set => this.RaiseAndSetIfChanged(ref _selectedFactory, value);
     }
-    
+
     /// <summary>
     /// Конструктор по умолчанию
     /// </summary>
     public MainWindowViewModel()
     {
         ShowEditFishDialog = new Interaction<ViewModelBase, Fish?>();
-        
+
         AddFreshwaterFishCommand = ReactiveCommand.CreateFromTask(AddFreshwaterFishImplementation);
         AddSaltwaterFishCommand = ReactiveCommand.CreateFromTask(AddSaltwaterFishImplementation);
 
         EditCommand = ReactiveCommand.CreateFromTask(EditFishCommand, this.WhenAnyValue(parX => parX.CanEditOrDelete));
         DeleteCommand = ReactiveCommand.CreateFromTask(DeleteFishAsync, this.WhenAnyValue(parX => parX.CanEditOrDelete));
 
-        GenerateTestFishCommand = ReactiveCommand.Create(GenerateTestFish);
+        GenerateTestFishCommand = ReactiveCommand.CreateFromTask(GenerateTestFishAsync);
+        ApplyFilterCommand = ReactiveCommand.Create(() => ApplyFilter());
+        ClearFilterCommand = ReactiveCommand.Create(ClearFilter);
+
+        InitializeFactories(0);
+        ApplyFilter();
     }
-    
+
     /// <summary>
     /// Реализация добавления пресноводной рыбы
     /// </summary>
@@ -119,8 +205,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
         if (result != null)
         {
-            FishList.Add(result);
-            SelectedFish = result;
+            _allFish.Add(result);
+            ApplyFilter(result);
         }
     }
 
@@ -137,11 +223,10 @@ public partial class MainWindowViewModel : ViewModelBase
 
         if (result != null)
         {
-            FishList.Add(result);
-            SelectedFish = result;
+            _allFish.Add(result);
+            ApplyFilter(result);
         }
     }
-
 
     /// <summary>
     /// Редактирование выбранной рыбы
@@ -171,7 +256,6 @@ public partial class MainWindowViewModel : ViewModelBase
         if (result != null)
         {
             SelectedFish.CopyFrom(result);
-            FishList.Contains(SelectedFish);
         }
     }
 
@@ -200,23 +284,60 @@ public partial class MainWindowViewModel : ViewModelBase
         }
 
         var result = await ShowEditFishDialog.Handle(deleteViewModel);
-        if (result != null)
+        if (result != null && SelectedFish != null)
         {
-            FishList.Remove(SelectedFish);
+            _allFish.Remove(SelectedFish);
+            ApplyFilter();
         }
     }
 
     /// <summary>
     /// Генерация тестового списка рыб
     /// </summary>
-    private void GenerateTestFish()
+    private async Task GenerateTestFishAsync()
     {
-        foreach (var fish in FishGenerator.GenerateFishList())
+        var progressController = new ProgressFormController();
+        progressController.Initialize(
+            "Генерация тестовых записей",
+            "Подготовка к генерации...",
+            FishGenerator.RecordCount,
+            ProgressCompletionMode.WaitForUserAction);
+
+        using var cts = new CancellationTokenSource();
+        progressController.OperationCancelled += (_, _) => cts.Cancel();
+
+        try
         {
-            FishList.Add(fish);
+            var generatedFish = await Task.Run(
+                () => FishGenerator.GenerateFishListAsync(progressController, cts.Token),
+                cts.Token);
+
+            if (cts.IsCancellationRequested)
+            {
+                return;
+            }
+
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                _allFish.Clear();
+                _allFish.AddRange(generatedFish);
+                ApplyFilter();
+            });
+        }
+        catch (OperationCanceledException)
+        {
+            progressController.ReportProgress(0, "Генерация отменена пользователем.");
+        }
+        catch (Exception ex)
+        {
+            progressController.ReportProgress(0, $"Ошибка: {ex.Message}");
+        }
+        finally
+        {
+            progressController.Close();
         }
     }
-    
+
     /// <summary>
     /// Инициализация фабрик на основе выбранного индекса
     /// </summary>
@@ -233,7 +354,7 @@ public partial class MainWindowViewModel : ViewModelBase
             _ => throw new InvalidOperationException("Неизвестная фабрика")
         };
     }
-    
+
     /// <summary>
     /// Создание ViewModel для редактирования рыбы
     /// </summary>
@@ -251,5 +372,120 @@ public partial class MainWindowViewModel : ViewModelBase
             Tuna tuna => new FishEditor<Tuna>(tuna, parIsViewMode),
             _ => throw new InvalidOperationException("Неизвестный тип рыбы")
         };
+    }
+
+    private void ApplyFilter(Fish? preferredSelection = null)
+    {
+        var filter = TypeFilter?.Trim() ?? string.Empty;
+        var minWeight = TryParseDecimal(WeightMinFilter);
+        var maxWeight = TryParseDecimal(WeightMaxFilter);
+
+        if (minWeight.HasValue && maxWeight.HasValue && minWeight > maxWeight)
+        {
+            (minWeight, maxWeight) = (maxWeight, minWeight);
+        }
+
+        IEnumerable<Fish> query = _allFish;
+
+        if (!string.IsNullOrWhiteSpace(filter))
+        {
+            query = query.Where(fish => fish.TypeName.Contains(filter, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (minWeight.HasValue || maxWeight.HasValue)
+        {
+            query = query.Where(fish =>
+            {
+                var weight = fish.Weight;
+                if (minWeight.HasValue && weight < minWeight.Value)
+                {
+                    return false;
+                }
+
+                if (maxWeight.HasValue && weight > maxWeight.Value)
+                {
+                    return false;
+                }
+
+                return true;
+            });
+        }
+
+        _filteredFish = query.ToList();
+        this.RaisePropertyChanged(nameof(FishList));
+
+        UpdateFilterSummary(filter, minWeight, maxWeight);
+
+        var selectionToRestore = preferredSelection ?? SelectedFish;
+        if (selectionToRestore != null && _filteredFish.Contains(selectionToRestore))
+        {
+            var previous = selectionToRestore;
+            SelectedFish = null;
+            SelectedFish = previous;
+        }
+        else
+        {
+            SelectedFish = _filteredFish.FirstOrDefault();
+        }
+    }
+
+    private void ClearFilter()
+    {
+        TypeFilter = string.Empty;
+        WeightMinFilter = string.Empty;
+        WeightMaxFilter = string.Empty;
+        ApplyFilter();
+    }
+
+    private void UpdateFilterSummary(string filter, decimal? minWeight, decimal? maxWeight)
+    {
+        var parts = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(filter))
+        {
+            parts.Add($"Тип содержит \"{filter}\"");
+        }
+
+        if (minWeight.HasValue && maxWeight.HasValue)
+        {
+            if (minWeight.Value == maxWeight.Value)
+            {
+                parts.Add($"Вес = {minWeight.Value.ToString("N2", CultureInfo.CurrentCulture)} г");
+            }
+            else
+            {
+                parts.Add($"Вес {minWeight.Value.ToString("N2", CultureInfo.CurrentCulture)}–{maxWeight.Value.ToString("N2", CultureInfo.CurrentCulture)} г");
+            }
+        }
+        else if (minWeight.HasValue)
+        {
+            parts.Add($"Вес ≥ {minWeight.Value.ToString("N2", CultureInfo.CurrentCulture)} г");
+        }
+        else if (maxWeight.HasValue)
+        {
+            parts.Add($"Вес ≤ {maxWeight.Value.ToString("N2", CultureInfo.CurrentCulture)} г");
+        }
+
+        CurrentFilterSummary = parts.Count == 0 ? "Без фильтра" : string.Join("; ", parts);
+    }
+
+    private static decimal? TryParseDecimal(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        if (decimal.TryParse(value, NumberStyles.Number, CultureInfo.CurrentCulture, out var result))
+        {
+            return result;
+        }
+
+        if (decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out result))
+        {
+            return result;
+        }
+
+        return null;
     }
 }

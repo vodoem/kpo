@@ -30,5 +30,6 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Duz_vadim_project\Duz_vadim_project.csproj" />
+      <ProjectReference Include="..\ProgressDisplay\ProgressDisplay.csproj" />
     </ItemGroup>
 </Project>
