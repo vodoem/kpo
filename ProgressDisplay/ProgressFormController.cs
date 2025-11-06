@@ -154,13 +154,6 @@ public sealed class ProgressFormController
         _viewModel.CancelButtonText = "Закрыть";
         _viewModel.IsCancelEnabled = true;
 
-        if (_completionRaised)
-        {
-            return;
-        }
-
-        _completionRaised = true;
-
         if (_completionMode == ProgressCompletionMode.AutoClose)
         {
             Close();
@@ -189,7 +182,6 @@ public sealed class ProgressFormController
     {
         if (_currentValue >= _maximum)
         {
-            RaiseCompletionEvent();
             return;
         }
 
@@ -231,7 +223,6 @@ public sealed class ProgressFormController
     {
         if (_completionRaised)
         {
-            FormClosed?.Invoke(this, EventArgs.Empty);
             return;
         }
 

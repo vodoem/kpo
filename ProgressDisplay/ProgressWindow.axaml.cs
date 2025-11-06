@@ -1,7 +1,6 @@
 using System;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using Avalonia.Markup.Xaml;
 
 namespace ProgressDisplay;
 
@@ -21,11 +20,6 @@ public partial class ProgressWindow : Window
     public ProgressWindow()
     {
         InitializeComponent();
-    }
-
-    private void InitializeComponent()
-    {
-        AvaloniaXamlLoader.Load(this);
     }
 
     private void OnCancelClicked(object? sender, RoutedEventArgs e)
