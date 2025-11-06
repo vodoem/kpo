@@ -11,9 +11,7 @@
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.7" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.7" />
   </ItemGroup>
-
   <ItemGroup>
-    <AvaloniaResource Remove="bin\\**" />
-    <AvaloniaResource Remove="obj\\**" />
+    <AvaloniaResource Include="Assets\**" />
   </ItemGroup>
 </Project>
