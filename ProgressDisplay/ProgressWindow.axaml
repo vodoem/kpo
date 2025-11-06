@@ -1,23 +1,42 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:ProgressDisplay"
         x:Class="ProgressDisplay.ProgressWindow"
-        Width="360"
+        x:DataType="vm:ProgressWindowViewModel"
+        Width="380"
         Height="200"
+        MinWidth="360"
+        MinHeight="180"
+        CanResize="False"
         Title="Процесс">
-  <Grid RowDefinitions="Auto,Auto,Auto,*" Margin="16" RowSpacing="12">
-    <TextBlock TextWrapping="Wrap" Text="{Binding Caption}" FontSize="16" />
-    <ProgressBar Grid.Row="1"
-                 Minimum="0"
-                 Maximum="{Binding ProgressMaximum}"
-                 Value="{Binding ProgressValue}"
-                 Height="24" />
-    <TextBlock Grid.Row="2" TextWrapping="Wrap" Text="{Binding Details}" />
-    <Button Grid.Row="3"
-            HorizontalAlignment="Right"
-            Width="120"
-            Height="32"
-            Content="{Binding CancelButtonText}"
-            IsEnabled="{Binding IsCancelEnabled}"
-            Click="OnCancelClicked" />
-  </Grid>
+  <Border Margin="16"
+          Padding="20"
+          CornerRadius="12"
+          Background="{DynamicResource ThemeBackgroundBrush}"
+          BorderBrush="{DynamicResource ThemeBorderBrush}"
+          BorderThickness="1">
+    <StackPanel Spacing="16">
+      <TextBlock TextWrapping="Wrap"
+                 TextAlignment="Center"
+                 HorizontalAlignment="Center"
+                 FontSize="16"
+                 Text="{Binding Caption}" />
+      <ProgressBar Minimum="0"
+                   Maximum="{Binding ProgressMaximum}"
+                   Value="{Binding ProgressValue}"
+                   Height="24" />
+      <TextBlock TextWrapping="Wrap"
+                 TextAlignment="Center"
+                 HorizontalAlignment="Center"
+                 FontSize="13"
+                 Foreground="{DynamicResource ThemeForegroundBrush}"
+                 Text="{Binding Details}" />
+      <Button Width="120"
+              Height="32"
+              HorizontalAlignment="Center"
+              Content="{Binding CancelButtonText}"
+              IsEnabled="{Binding IsCancelEnabled}"
+              Click="OnCancelClicked" />
+    </StackPanel>
+  </Border>
 </Window>
