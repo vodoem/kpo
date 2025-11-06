@@ -306,6 +306,8 @@ public partial class MainWindowViewModel : ViewModelBase
         using var cts = new CancellationTokenSource();
         progressController.OperationCancelled += (_, _) => cts.Cancel();
 
+        var shouldCloseForm = false;
+
         try
         {
             var generatedFish = await Task.Run(
@@ -314,6 +316,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
             if (cts.IsCancellationRequested)
             {
+                progressController.ReportProgress(0, "Генерация отменена пользователем.");
+                shouldCloseForm = true;
                 return;
             }
 
@@ -323,18 +327,25 @@ public partial class MainWindowViewModel : ViewModelBase
                 _allFish.AddRange(generatedFish);
                 ApplyFilter();
             });
+
+            progressController.ReportProgress(0, "Генерация завершена. Нажмите «Закрыть».");
         }
         catch (OperationCanceledException)
         {
+            shouldCloseForm = true;
             progressController.ReportProgress(0, "Генерация отменена пользователем.");
         }
         catch (Exception ex)
         {
+            shouldCloseForm = true;
             progressController.ReportProgress(0, $"Ошибка: {ex.Message}");
         }
         finally
         {
-            progressController.Close();
+            if (shouldCloseForm)
+            {
+                progressController.Close();
+            }
         }
     }
 
