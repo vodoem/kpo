@@ -301,7 +301,7 @@ public partial class MainWindowViewModel : ViewModelBase
             "Генерация тестовых записей",
             "Подготовка к генерации...",
             FishGenerator.RecordCount,
-            ProgressCompletionMode.WaitForUserAction);
+            ProgressCompletionMode.AutoClose);
 
         using var cts = new CancellationTokenSource();
         progressController.OperationCancelled += (_, _) => cts.Cancel();
@@ -328,7 +328,7 @@ public partial class MainWindowViewModel : ViewModelBase
                 ApplyFilter();
             });
 
-            progressController.ReportProgress(0, "Генерация завершена. Нажмите «Закрыть».");
+            progressController.ReportProgress(0, "Генерация завершена.");
         }
         catch (OperationCanceledException)
         {

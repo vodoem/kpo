@@ -19,7 +19,7 @@ public static class FishGenerator
     public const int RecordCount = 1_000_000;
 
     private const int BatchSize = 4000;
-    private const double TargetDurationSeconds = 45.0;
+    private const double TargetDurationSeconds = 10.0;
     private static readonly char[] Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".ToCharArray();
 
     /// <summary>
@@ -64,9 +64,9 @@ public static class FishGenerator
 
         stopwatch.Stop();
 
-        if (stopwatch.Elapsed < TimeSpan.FromSeconds(30))
+        if (stopwatch.Elapsed < TimeSpan.FromSeconds(10))
         {
-            var remaining = TimeSpan.FromSeconds(30) - stopwatch.Elapsed;
+            var remaining = TimeSpan.FromSeconds(10) - stopwatch.Elapsed;
             if (remaining > TimeSpan.Zero)
             {
                 await Task.Delay(remaining, cancellationToken).ConfigureAwait(false);

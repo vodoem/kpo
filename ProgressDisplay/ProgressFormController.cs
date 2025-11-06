@@ -152,11 +152,14 @@ public sealed class ProgressFormController
             return;
         }
 
-        _viewModel.CancelButtonText = "Закрыть";
-        _viewModel.IsCancelEnabled = true;
-
-        if (_completionMode == ProgressCompletionMode.AutoClose)
+        if (_completionMode == ProgressCompletionMode.WaitForUserAction)
         {
+            _viewModel.CancelButtonText = "Закрыть";
+            _viewModel.IsCancelEnabled = true;
+        }
+        else
+        {
+            _viewModel.IsCancelEnabled = false;
             Close();
         }
     }
