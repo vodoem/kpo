@@ -19,7 +19,7 @@ using UI.ViewModels.EditFish;
 namespace UI.ViewModels;
 
 /// <summary>
-/// ViewModel главного окна для работы с рыбами
+/// Модель представления главного окна для работы с рыбами.
 /// </summary>
 public partial class MainWindowViewModel : ViewModelBase
 {
@@ -39,12 +39,12 @@ public partial class MainWindowViewModel : ViewModelBase
     public IReadOnlyList<Fish> FishList => _filteredFish;
 
     /// <summary>
-    /// Выбранная рыба
+    /// Выбранная рыба.
     /// </summary>
     private Fish? _selectedFish;
 
     /// <summary>
-    /// Выбранная рыба
+    /// Выбранная рыба.
     /// </summary>
     public Fish? SelectedFish
     {
@@ -57,7 +57,7 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Возможность редактировать или удалить выбранную рыбу
+    /// Возможность редактировать или удалить выбранную рыбу.
     /// </summary>
     public bool CanEditOrDelete => SelectedFish != null;
 
@@ -118,32 +118,32 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Взаимодействие с диалогом редактирования рыбы
+    /// Взаимодействие с диалоговым окном редактирования рыбы.
     /// </summary>
     public Interaction<ViewModelBase, Fish?> ShowEditFishDialog { get; }
 
     /// <summary>
-    /// Команда для добавления пресноводной рыбы
+    /// Команда для добавления пресноводной рыбы.
     /// </summary>
     public ReactiveCommand<Unit, Unit> AddFreshwaterFishCommand { get; }
 
     /// <summary>
-    /// Команда для добавления морской рыбы
+    /// Команда для добавления морской рыбы.
     /// </summary>
     public ReactiveCommand<Unit, Unit> AddSaltwaterFishCommand { get; }
 
     /// <summary>
-    /// Команда для редактирования выбранной рыбы
+    /// Команда для редактирования выбранной рыбы.
     /// </summary>
     public ReactiveCommand<Unit, Unit> EditCommand { get; }
 
     /// <summary>
-    /// Команда для удаления выбранной рыбы
+    /// Команда для удаления выбранной рыбы.
     /// </summary>
     public ReactiveCommand<Unit, Unit> DeleteCommand { get; }
 
     /// <summary>
-    /// Команда для генерации тестового списка рыб
+    /// Команда для генерации тестового списка рыб.
     /// </summary>
     public ReactiveCommand<Unit, Unit> GenerateTestFishCommand { get; }
 
@@ -158,12 +158,12 @@ public partial class MainWindowViewModel : ViewModelBase
     public ReactiveCommand<Unit, Unit> ClearFilterCommand { get; }
 
     /// <summary>
-    /// Выбранная фабрика для создания объектов рыб
+    /// Выбранная фабрика для создания объектов рыб.
     /// </summary>
     private IFishFactory? _selectedFactory;
 
     /// <summary>
-    /// Свойство для доступа к выбранной фабрике
+    /// Свойство для доступа к выбранной фабрике.
     /// </summary>
     public IFishFactory? SelectedFactory
     {
@@ -172,7 +172,7 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Конструктор по умолчанию
+    /// Конструктор по умолчанию.
     /// </summary>
     public MainWindowViewModel()
     {
@@ -193,7 +193,7 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Реализация добавления пресноводной рыбы
+    /// Реализация добавления пресноводной рыбы.
     /// </summary>
     private async Task AddFreshwaterFishImplementation()
     {
@@ -211,7 +211,7 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Реализация добавления морской рыбы
+    /// Реализация добавления морской рыбы.
     /// </summary>
     private async Task AddSaltwaterFishImplementation()
     {
@@ -229,7 +229,7 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Редактирование выбранной рыбы
+    /// Редактирование выбранной рыбы.
     /// </summary>
     private async Task EditFishCommand()
     {
@@ -260,7 +260,7 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Удаление выбранной рыбы
+    /// Удаление выбранной рыбы.
     /// </summary>
     private async Task DeleteFishAsync()
     {
@@ -292,7 +292,7 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Генерация тестового списка рыб
+    /// Генерация тестового списка рыб.
     /// </summary>
     private async Task GenerateTestFishAsync()
     {
@@ -350,7 +350,7 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Инициализация фабрик на основе выбранного индекса
+    /// Инициализация фабрик на основе выбранного индекса.
     /// </summary>
     /// <param name="parFactoryIndex">Индекс выбранной фабрики</param>
     /// <exception cref="InvalidOperationException">Выбрана неизвестная фабрика</exception>
@@ -367,11 +367,11 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Создание ViewModel для редактирования рыбы
+    /// Создание модели представления для редактирования рыбы.
     /// </summary>
     /// <param name="parFish">Объект рыбы</param>
     /// <param name="parIsViewMode">Флаг режима просмотра</param>
-    /// <returns>ViewModel для редактирования рыбы</returns>
+    /// <returns>Модель представления для редактирования рыбы.</returns>
     /// <exception cref="InvalidOperationException">Неизвестный тип рыбы</exception>
     public static ViewModelBase CreateEditor(Fish parFish, bool parIsViewMode)
     {
