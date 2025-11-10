@@ -10,12 +10,39 @@ namespace ProgressDisplay;
 /// </summary>
 public sealed class ProgressWindowViewModel : INotifyPropertyChanged
 {
+    /// <summary>
+    /// Текст, отображаемый над индикатором прогресса.
+    /// </summary>
     private string _caption = string.Empty;
+
+    /// <summary>
+    /// Дополнительное описание текущей операции.
+    /// </summary>
     private string _details = string.Empty;
+
+    /// <summary>
+    /// Максимальное значение шкалы прогресса.
+    /// </summary>
     private double _progressMaximum;
+
+    /// <summary>
+    /// Текущее значение шкалы прогресса.
+    /// </summary>
     private double _progressValue;
+
+    /// <summary>
+    /// Надпись на кнопке отмены.
+    /// </summary>
     private string _cancelButtonText = "Отмена";
+
+    /// <summary>
+    /// Признак доступности кнопки отмены.
+    /// </summary>
     private bool _isCancelEnabled = true;
+
+    /// <summary>
+    /// Команда, вызываемая при нажатии на кнопку отмены.
+    /// </summary>
     private readonly RelayCommand _cancelCommand;
 
     /// <inheritdoc />
@@ -99,46 +126,84 @@ public sealed class ProgressWindowViewModel : INotifyPropertyChanged
     /// </summary>
     public ICommand CancelCommand => _cancelCommand;
 
+    /// <summary>
+    /// Генерирует событие запроса отмены.
+    /// </summary>
     private void RaiseCancellationRequested()
     {
         CancellationRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+    /// <summary>
+    /// Устанавливает новое значение свойства и уведомляет об изменении.
+    /// </summary>
+    /// <typeparam name="T">Тип обновляемого поля.</typeparam>
+    /// <param name="parField">Ссылка на поле, содержащее значение свойства.</param>
+    /// <param name="parValue">Новое значение.</param>
+    /// <param name="parPropertyName">Имя свойства, которое необходимо уведомить об изменении.</param>
+    /// <returns><c>true</c>, если значение изменилось.</returns>
+    private bool SetField<T>(ref T parField, T parValue, [CallerMemberName] string? parPropertyName = null)
     {
-        if (Equals(field, value))
+        if (Equals(parField, parValue))
         {
             return false;
         }
 
-        field = value;
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        parField = parValue;
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(parPropertyName));
         return true;
     }
 
+    /// <summary>
+    /// Реализует простую команду для обработки нажатия кнопки.
+    /// </summary>
     private sealed class RelayCommand : ICommand
     {
+        /// <summary>
+        /// Делегат выполнения команды.
+        /// </summary>
         private readonly Action<object?> _execute;
+
+        /// <summary>
+        /// Делегат проверки возможности выполнения команды.
+        /// </summary>
         private readonly Func<object?, bool> _canExecute;
 
-        public RelayCommand(Action<object?> execute, Func<object?, bool> canExecute)
+        /// <summary>
+        /// Создаёт новый экземпляр команды.
+        /// </summary>
+        /// <param name="parExecute">Делегат выполнения.</param>
+        /// <param name="parCanExecute">Делегат проверки доступности.</param>
+        public RelayCommand(Action<object?> parExecute, Func<object?, bool> parCanExecute)
         {
-            _execute = execute ?? throw new ArgumentNullException(nameof(execute));
-            _canExecute = canExecute ?? throw new ArgumentNullException(nameof(canExecute));
+            _execute = parExecute ?? throw new ArgumentNullException(nameof(parExecute));
+            _canExecute = parCanExecute ?? throw new ArgumentNullException(nameof(parCanExecute));
         }
 
         public event EventHandler? CanExecuteChanged;
 
-        public bool CanExecute(object? parameter)
+        /// <summary>
+        /// Определяет, доступна ли команда для выполнения.
+        /// </summary>
+        /// <param name="parParameter">Параметр команды.</param>
+        /// <returns><c>true</c>, если команду можно выполнить.</returns>
+        public bool CanExecute(object? parParameter)
         {
-            return _canExecute(parameter);
+            return _canExecute(parParameter);
         }
 
-        public void Execute(object? parameter)
+        /// <summary>
+        /// Выполняет команду.
+        /// </summary>
+        /// <param name="parParameter">Параметр команды.</param>
+        public void Execute(object? parParameter)
         {
-            _execute(parameter);
+            _execute(parParameter);
         }
 
+        /// <summary>
+        /// Уведомляет подписчиков об изменении доступности команды.
+        /// </summary>
         public void RaiseCanExecuteChanged()
         {
             CanExecuteChanged?.Invoke(this, EventArgs.Empty);

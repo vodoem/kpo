@@ -18,23 +18,42 @@ public static class FishGenerator
     /// </summary>
     public const int RecordCount = 1_000_000;
 
+    /// <summary>
+    /// Количество записей, создаваемых за одну итерацию цикла.
+    /// </summary>
     private const int BatchSize = 4000;
+
+    /// <summary>
+    /// Целевое время генерации в секундах, используемое для равномерного заполнения прогресса.
+    /// </summary>
     private const double TargetDurationSeconds = 45.0;
+
+    /// <summary>
+    /// Минимально допустимая длительность генерации.
+    /// </summary>
     private const double MinimumDurationSeconds = 30.0;
+
+    /// <summary>
+    /// Максимально допустимая длительность генерации.
+    /// </summary>
     private const double MaximumDurationSeconds = 60.0;
+
+    /// <summary>
+    /// Символы, используемые для генерации случайных строковых значений.
+    /// </summary>
     private static readonly char[] Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".ToCharArray();
 
     /// <summary>
     /// Создаёт список случайных рыб и передаёт информацию о прогрессе указанному контроллеру.
     /// </summary>
-    /// <param name="progressForm">Контроллер, отображающий ход выполнения пользователю.</param>
-    /// <param name="cancellationToken">Токен отмены для прерывания генерации.</param>
+    /// <param name="parProgressForm">Контроллер, отображающий ход выполнения пользователю.</param>
+    /// <param name="parCancellationToken">Токен отмены для прерывания генерации.</param>
     /// <returns>Список сгенерированных рыб.</returns>
-    public static async Task<List<Fish>> GenerateFishListAsync(ProgressFormController progressForm, CancellationToken cancellationToken)
+    public static async Task<List<Fish>> GenerateFishListAsync(ProgressFormController parProgressForm, CancellationToken parCancellationToken)
     {
-        if (progressForm is null)
+        if (parProgressForm is null)
         {
-            throw new ArgumentNullException(nameof(progressForm));
+            throw new ArgumentNullException(nameof(parProgressForm));
         }
 
         var result = new List<Fish>(RecordCount);
@@ -44,24 +63,24 @@ public static class FishGenerator
 
         while (processed < RecordCount)
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            parCancellationToken.ThrowIfCancellationRequested();
 
             var currentBatch = Math.Min(BatchSize, RecordCount - processed);
             for (var i = 0; i < currentBatch; i++)
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                parCancellationToken.ThrowIfCancellationRequested();
                 result.Add(CreateRandomFish(random));
             }
 
             processed += currentBatch;
 
             var caption = $"Создано {processed:N0} из {RecordCount:N0}";
-            if (progressForm.ReportProgress(currentBatch, caption))
+            if (parProgressForm.ReportProgress(currentBatch, caption))
             {
-                throw new OperationCanceledException(cancellationToken);
+                throw new OperationCanceledException(parCancellationToken);
             }
 
-            await DelayIfNeededAsync(stopwatch, processed, cancellationToken).ConfigureAwait(false);
+            await DelayIfNeededAsync(stopwatch, processed, parCancellationToken).ConfigureAwait(false);
         }
 
         stopwatch.Stop();
@@ -79,18 +98,24 @@ public static class FishGenerator
 
             if (remaining > TimeSpan.Zero)
             {
-                await Task.Delay(remaining, cancellationToken).ConfigureAwait(false);
+                await Task.Delay(remaining, parCancellationToken).ConfigureAwait(false);
             }
         }
 
         return result;
     }
 
-    private static async Task DelayIfNeededAsync(Stopwatch stopwatch, int processed, CancellationToken cancellationToken)
+    /// <summary>
+    /// Выполняет дополнительную задержку, если фактическое время генерации опережает целевое.
+    /// </summary>
+    /// <param name="parStopwatch">Таймер, отслеживающий продолжительность генерации.</param>
+    /// <param name="parProcessed">Количество уже обработанных записей.</param>
+    /// <param name="parCancellationToken">Токен отмены операции.</param>
+    private static async Task DelayIfNeededAsync(Stopwatch parStopwatch, int parProcessed, CancellationToken parCancellationToken)
     {
-        var targetElapsed = TargetDurationSeconds * (processed / (double)RecordCount);
+        var targetElapsed = TargetDurationSeconds * (parProcessed / (double)RecordCount);
         targetElapsed = Math.Min(targetElapsed, MaximumDurationSeconds);
-        var elapsed = stopwatch.Elapsed.TotalSeconds;
+        var elapsed = parStopwatch.Elapsed.TotalSeconds;
 
         if (elapsed >= targetElapsed)
         {
@@ -101,61 +126,99 @@ public static class FishGenerator
         var cappedDelay = Math.Min(delay, 0.5);
         if (cappedDelay > 0)
         {
-            await Task.Delay(TimeSpan.FromSeconds(cappedDelay), cancellationToken).ConfigureAwait(false);
+            await Task.Delay(TimeSpan.FromSeconds(cappedDelay), parCancellationToken).ConfigureAwait(false);
         }
     }
 
-    private static Fish CreateRandomFish(Random random)
+    /// <summary>
+    /// Создаёт случайный экземпляр рыбы одного из поддерживаемых типов.
+    /// </summary>
+    /// <param name="parRandom">Генератор случайных чисел.</param>
+    /// <returns>Случайно созданная рыба.</returns>
+    private static Fish CreateRandomFish(Random parRandom)
     {
-        return random.Next(4) switch
+        return parRandom.Next(4) switch
         {
-            0 => CreateRandomBream(random),
-            1 => CreateRandomCarp(random),
-            2 => CreateRandomMackerel(random),
-            _ => CreateRandomTuna(random)
+            0 => CreateRandomBream(parRandom),
+            1 => CreateRandomCarp(parRandom),
+            2 => CreateRandomMackerel(parRandom),
+            _ => CreateRandomTuna(parRandom)
         };
     }
 
-    private static Bream CreateRandomBream(Random random) => new(
-        NextDecimal(random, 500, 7000),
-        random.Next(1, 21),
-        random.Next(0, 2) == 0,
-        NextDecimal(random, 1, 25),
-        RandomString(random, 8));
+    /// <summary>
+    /// Формирует случайного леща с произвольными параметрами.
+    /// </summary>
+    /// <param name="parRandom">Генератор случайных чисел.</param>
+    /// <returns>Экземпляр леща.</returns>
+    private static Bream CreateRandomBream(Random parRandom) => new(
+        NextDecimal(parRandom, 500, 7000),
+        parRandom.Next(1, 21),
+        parRandom.Next(0, 2) == 0,
+        NextDecimal(parRandom, 1, 25),
+        RandomString(parRandom, 8));
 
-    private static Carp CreateRandomCarp(Random random) => new(
-        NextDecimal(random, 500, 9000),
-        random.Next(1, 31),
-        random.Next(0, 2) == 0,
-        NextDecimal(random, 1, 30),
-        RandomString(random, 6));
+    /// <summary>
+    /// Формирует случайного карпа с произвольными параметрами.
+    /// </summary>
+    /// <param name="parRandom">Генератор случайных чисел.</param>
+    /// <returns>Экземпляр карпа.</returns>
+    private static Carp CreateRandomCarp(Random parRandom) => new(
+        NextDecimal(parRandom, 500, 9000),
+        parRandom.Next(1, 31),
+        parRandom.Next(0, 2) == 0,
+        NextDecimal(parRandom, 1, 30),
+        RandomString(parRandom, 6));
 
-    private static Mackerel CreateRandomMackerel(Random random) => new(
-        NextDecimal(random, 300, 5000),
-        random.Next(1, 16),
-        random.Next(0, 2) == 0,
-        NextDecimal(random, 5, 40),
-        NextDecimal(random, 1, 10));
+    /// <summary>
+    /// Формирует случайную скумбрию с произвольными параметрами.
+    /// </summary>
+    /// <param name="parRandom">Генератор случайных чисел.</param>
+    /// <returns>Экземпляр скумбрии.</returns>
+    private static Mackerel CreateRandomMackerel(Random parRandom) => new(
+        NextDecimal(parRandom, 300, 5000),
+        parRandom.Next(1, 16),
+        parRandom.Next(0, 2) == 0,
+        NextDecimal(parRandom, 5, 40),
+        NextDecimal(parRandom, 1, 10));
 
-    private static Tuna CreateRandomTuna(Random random) => new(
-        NextDecimal(random, 2000, 35000),
-        random.Next(1, 31),
-        random.Next(0, 2) == 0,
-        NextDecimal(random, 5, 40),
-        NextDecimal(random, 10, 80));
+    /// <summary>
+    /// Формирует случайного тунца с произвольными параметрами.
+    /// </summary>
+    /// <param name="parRandom">Генератор случайных чисел.</param>
+    /// <returns>Экземпляр тунца.</returns>
+    private static Tuna CreateRandomTuna(Random parRandom) => new(
+        NextDecimal(parRandom, 2000, 35000),
+        parRandom.Next(1, 31),
+        parRandom.Next(0, 2) == 0,
+        NextDecimal(parRandom, 5, 40),
+        NextDecimal(parRandom, 10, 80));
 
-    private static decimal NextDecimal(Random random, double min, double max)
+    /// <summary>
+    /// Возвращает случайное десятичное число в указанном диапазоне.
+    /// </summary>
+    /// <param name="parRandom">Генератор случайных чисел.</param>
+    /// <param name="parMin">Минимальное значение диапазона.</param>
+    /// <param name="parMax">Максимальное значение диапазона.</param>
+    /// <returns>Случайное десятичное число.</returns>
+    private static decimal NextDecimal(Random parRandom, double parMin, double parMax)
     {
-        var value = min + random.NextDouble() * (max - min);
+        var value = parMin + parRandom.NextDouble() * (parMax - parMin);
         return Math.Round((decimal)value, 2);
     }
 
-    private static string RandomString(Random random, int length)
+    /// <summary>
+    /// Возвращает случайную строку указанной длины из набора символов <see cref="Alphabet"/>.
+    /// </summary>
+    /// <param name="parRandom">Генератор случайных чисел.</param>
+    /// <param name="parLength">Требуемая длина строки.</param>
+    /// <returns>Случайная строка.</returns>
+    private static string RandomString(Random parRandom, int parLength)
     {
-        var buffer = new char[length];
+        var buffer = new char[parLength];
         for (var i = 0; i < buffer.Length; i++)
         {
-            buffer[i] = Alphabet[random.Next(Alphabet.Length)];
+            buffer[i] = Alphabet[parRandom.Next(Alphabet.Length)];
         }
 
         return new string(buffer);

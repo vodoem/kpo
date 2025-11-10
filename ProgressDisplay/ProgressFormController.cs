@@ -11,14 +11,49 @@ namespace ProgressDisplay;
 /// </summary>
 public sealed class ProgressFormController
 {
+    /// <summary>
+    /// Объект синхронизации для обновления состояния прогресса из разных потоков.
+    /// </summary>
     private readonly object _syncRoot = new();
+
+    /// <summary>
+    /// Текущее окно прогресса.
+    /// </summary>
     private ProgressWindow? _window;
+
+    /// <summary>
+    /// Модель представления, отображающая состояние прогресса.
+    /// </summary>
     private ProgressWindowViewModel? _viewModel;
+
+    /// <summary>
+    /// Выбранный режим завершения работы формы.
+    /// </summary>
     private ProgressCompletionMode _completionMode;
+
+    /// <summary>
+    /// Текущее значение прогресса.
+    /// </summary>
     private double _currentValue;
+
+    /// <summary>
+    /// Максимальное значение прогресса.
+    /// </summary>
     private double _maximum;
+
+    /// <summary>
+    /// Признак того, что пользователь запросил отмену операции.
+    /// </summary>
     private bool _cancelRequested;
+
+    /// <summary>
+    /// Признак того, что событие завершения уже отправлено подписчикам.
+    /// </summary>
     private bool _completionRaised;
+
+    /// <summary>
+    /// Признак того, что событие отмены уже отправлено подписчикам.
+    /// </summary>
     private bool _cancelRaised;
 
     /// <summary>
@@ -34,19 +69,19 @@ public sealed class ProgressFormController
     /// <summary>
     /// Инициализирует и отображает форму прогресса.
     /// </summary>
-    /// <param name="title">Заголовок окна.</param>
-    /// <param name="caption">Подпись, отображаемая внутри формы.</param>
-    /// <param name="maximum">Максимальное количество обрабатываемых записей.</param>
-    /// <param name="completionMode">Определяет поведение после достижения максимального значения.</param>
-    public void Initialize(string title, string caption, double maximum, ProgressCompletionMode completionMode)
+    /// <param name="parTitle">Заголовок окна.</param>
+    /// <param name="parCaption">Подпись, отображаемая внутри формы.</param>
+    /// <param name="parMaximum">Максимальное количество обрабатываемых записей.</param>
+    /// <param name="parCompletionMode">Определяет поведение после достижения максимального значения.</param>
+    public void Initialize(string parTitle, string parCaption, double parMaximum, ProgressCompletionMode parCompletionMode)
     {
-        if (maximum <= 0)
+        if (parMaximum <= 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(maximum));
+            throw new ArgumentOutOfRangeException(nameof(parMaximum));
         }
 
-        _completionMode = completionMode;
-        _maximum = maximum;
+        _completionMode = parCompletionMode;
+        _maximum = parMaximum;
         _currentValue = 0;
         _cancelRequested = false;
         _completionRaised = false;
@@ -56,9 +91,9 @@ public sealed class ProgressFormController
         {
             _viewModel = new ProgressWindowViewModel
             {
-                Caption = caption,
-                Details = FormatDetails(0, maximum),
-                ProgressMaximum = maximum,
+                Caption = parCaption,
+                Details = FormatDetails(0, parMaximum),
+                ProgressMaximum = parMaximum,
                 ProgressValue = 0,
                 CancelButtonText = "Отмена",
                 IsCancelEnabled = true
@@ -69,7 +104,7 @@ public sealed class ProgressFormController
             _window = new ProgressWindow
             {
                 DataContext = _viewModel,
-                Title = title,
+                Title = parTitle,
                 CanResize = false,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner
             };
@@ -92,19 +127,19 @@ public sealed class ProgressFormController
     /// <summary>
     /// Передаёт форме сведения о продвижении выполнения.
     /// </summary>
-    /// <param name="processedCount">Количество обработанных записей. По умолчанию — 1.</param>
-    /// <param name="newCaption">Необязательная новая подпись.</param>
+    /// <param name="parProcessedCount">Количество обработанных записей. По умолчанию — 1.</param>
+    /// <param name="parNewCaption">Необязательная новая подпись.</param>
     /// <returns><c>true</c>, если вызывающему коду следует прекратить обработку; иначе <c>false</c>.</returns>
-    public bool ReportProgress(double processedCount = 1, string? newCaption = null)
+    public bool ReportProgress(double parProcessedCount = 1, string? parNewCaption = null)
     {
-        if (processedCount < 0)
+        if (parProcessedCount < 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(processedCount));
+            throw new ArgumentOutOfRangeException(nameof(parProcessedCount));
         }
 
         lock (_syncRoot)
         {
-            _currentValue = Math.Min(_currentValue + processedCount, _maximum);
+            _currentValue = Math.Min(_currentValue + parProcessedCount, _maximum);
         }
 
         Dispatcher.UIThread.Post(() =>
@@ -114,9 +149,9 @@ public sealed class ProgressFormController
                 return;
             }
 
-            if (!string.IsNullOrWhiteSpace(newCaption))
+            if (!string.IsNullOrWhiteSpace(parNewCaption))
             {
-                _viewModel.Caption = newCaption;
+                _viewModel.Caption = parNewCaption;
             }
 
             _viewModel.ProgressValue = _currentValue;
@@ -145,6 +180,9 @@ public sealed class ProgressFormController
         });
     }
 
+    /// <summary>
+    /// Реагирует на достижение максимального значения прогресса.
+    /// </summary>
     private void HandleCompletionReached()
     {
         if (_viewModel is null)
@@ -165,7 +203,12 @@ public sealed class ProgressFormController
         }
     }
 
-    private void OnCancellationRequested(object? sender, EventArgs e)
+    /// <summary>
+    /// Обрабатывает запрос отмены, поступивший из модели представления.
+    /// </summary>
+    /// <param name="parSender">Источник события.</param>
+    /// <param name="parEventArgs">Аргументы события.</param>
+    private void OnCancellationRequested(object? parSender, EventArgs parEventArgs)
     {
         if (_viewModel is null)
         {
@@ -183,7 +226,12 @@ public sealed class ProgressFormController
         RaiseCancellation();
     }
 
-    private void OnWindowClosing(object? sender, WindowClosingEventArgs e)
+    /// <summary>
+    /// Обрабатывает попытку закрытия окна прогресса.
+    /// </summary>
+    /// <param name="parSender">Источник события.</param>
+    /// <param name="parEventArgs">Аргументы события.</param>
+    private void OnWindowClosing(object? parSender, WindowClosingEventArgs parEventArgs)
     {
         if (_currentValue >= _maximum)
         {
@@ -197,7 +245,12 @@ public sealed class ProgressFormController
         }
     }
 
-    private void OnWindowClosed(object? sender, EventArgs e)
+    /// <summary>
+    /// Обрабатывает окончательное закрытие окна и освобождает ресурсы.
+    /// </summary>
+    /// <param name="parSender">Источник события.</param>
+    /// <param name="parEventArgs">Аргументы события.</param>
+    private void OnWindowClosed(object? parSender, EventArgs parEventArgs)
     {
         if (_viewModel != null)
         {
@@ -228,6 +281,9 @@ public sealed class ProgressFormController
         _viewModel = null;
     }
 
+    /// <summary>
+    /// Генерирует событие завершения формы при достижении максимума.
+    /// </summary>
     private void RaiseCompletionEvent()
     {
         if (_completionRaised)
@@ -239,6 +295,9 @@ public sealed class ProgressFormController
         FormClosed?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>
+    /// Генерирует событие отмены, уведомляя подписчиков.
+    /// </summary>
     private void RaiseCancellation()
     {
         if (_cancelRaised)
@@ -250,8 +309,14 @@ public sealed class ProgressFormController
         OperationCancelled?.Invoke(this, EventArgs.Empty);
     }
 
-    private static string FormatDetails(double current, double maximum)
+    /// <summary>
+    /// Формирует текстовое представление текущего прогресса.
+    /// </summary>
+    /// <param name="parCurrent">Текущее значение прогресса.</param>
+    /// <param name="parMaximum">Максимальное значение прогресса.</param>
+    /// <returns>Текст с информацией о ходе обработки.</returns>
+    private static string FormatDetails(double parCurrent, double parMaximum)
     {
-        return $"Обработано {current:N0} из {maximum:N0}";
+        return $"Обработано {parCurrent:N0} из {parMaximum:N0}";
     }
 }

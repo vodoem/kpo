@@ -385,7 +385,11 @@ public partial class MainWindowViewModel : ViewModelBase
         };
     }
 
-    private void ApplyFilter(Fish? preferredSelection = null)
+    /// <summary>
+    /// Применяет текущие значения фильтра и обновляет отображаемый список.
+    /// </summary>
+    /// <param name="parPreferredSelection">Объект рыбы, которому следует вернуть фокус после фильтрации.</param>
+    private void ApplyFilter(Fish? parPreferredSelection = null)
     {
         var filter = TypeFilter?.Trim() ?? string.Empty;
         var minWeight = TryParseDecimal(WeightMinFilter);
@@ -427,7 +431,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         UpdateFilterSummary(filter, minWeight, maxWeight);
 
-        var selectionToRestore = preferredSelection ?? SelectedFish;
+        var selectionToRestore = parPreferredSelection ?? SelectedFish;
         if (selectionToRestore != null && _filteredFish.Contains(selectionToRestore))
         {
             var previous = selectionToRestore;
@@ -440,6 +444,9 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Сбрасывает значения фильтров к настройкам по умолчанию.
+    /// </summary>
     private void ClearFilter()
     {
         TypeFilter = string.Empty;
@@ -448,51 +455,62 @@ public partial class MainWindowViewModel : ViewModelBase
         ApplyFilter();
     }
 
-    private void UpdateFilterSummary(string filter, decimal? minWeight, decimal? maxWeight)
+    /// <summary>
+    /// Обновляет текстовое описание активного фильтра.
+    /// </summary>
+    /// <param name="parFilter">Текстовый фильтр по типу рыбы.</param>
+    /// <param name="parMinWeight">Минимальный вес.</param>
+    /// <param name="parMaxWeight">Максимальный вес.</param>
+    private void UpdateFilterSummary(string parFilter, decimal? parMinWeight, decimal? parMaxWeight)
     {
         var parts = new List<string>();
 
-        if (!string.IsNullOrWhiteSpace(filter))
+        if (!string.IsNullOrWhiteSpace(parFilter))
         {
-            parts.Add($"Тип содержит \"{filter}\"");
+            parts.Add($"Тип содержит \"{parFilter}\"");
         }
 
-        if (minWeight.HasValue && maxWeight.HasValue)
+        if (parMinWeight.HasValue && parMaxWeight.HasValue)
         {
-            if (minWeight.Value == maxWeight.Value)
+            if (parMinWeight.Value == parMaxWeight.Value)
             {
-                parts.Add($"Вес = {minWeight.Value.ToString("N2", CultureInfo.CurrentCulture)} г");
+                parts.Add($"Вес = {parMinWeight.Value.ToString("N2", CultureInfo.CurrentCulture)} г");
             }
             else
             {
-                parts.Add($"Вес {minWeight.Value.ToString("N2", CultureInfo.CurrentCulture)}–{maxWeight.Value.ToString("N2", CultureInfo.CurrentCulture)} г");
+                parts.Add($"Вес {parMinWeight.Value.ToString("N2", CultureInfo.CurrentCulture)}–{parMaxWeight.Value.ToString("N2", CultureInfo.CurrentCulture)} г");
             }
         }
-        else if (minWeight.HasValue)
+        else if (parMinWeight.HasValue)
         {
-            parts.Add($"Вес ≥ {minWeight.Value.ToString("N2", CultureInfo.CurrentCulture)} г");
+            parts.Add($"Вес ≥ {parMinWeight.Value.ToString("N2", CultureInfo.CurrentCulture)} г");
         }
-        else if (maxWeight.HasValue)
+        else if (parMaxWeight.HasValue)
         {
-            parts.Add($"Вес ≤ {maxWeight.Value.ToString("N2", CultureInfo.CurrentCulture)} г");
+            parts.Add($"Вес ≤ {parMaxWeight.Value.ToString("N2", CultureInfo.CurrentCulture)} г");
         }
 
         CurrentFilterSummary = parts.Count == 0 ? "Без фильтра" : string.Join("; ", parts);
     }
 
-    private static decimal? TryParseDecimal(string value)
+    /// <summary>
+    /// Пытается преобразовать строку в десятичное число с учётом культуры.
+    /// </summary>
+    /// <param name="parValue">Исходная строка.</param>
+    /// <returns>Числовое значение или <c>null</c>, если преобразование не удалось.</returns>
+    private static decimal? TryParseDecimal(string parValue)
     {
-        if (string.IsNullOrWhiteSpace(value))
+        if (string.IsNullOrWhiteSpace(parValue))
         {
             return null;
         }
 
-        if (decimal.TryParse(value, NumberStyles.Number, CultureInfo.CurrentCulture, out var result))
+        if (decimal.TryParse(parValue, NumberStyles.Number, CultureInfo.CurrentCulture, out var result))
         {
             return result;
         }
 
-        if (decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out result))
+        if (decimal.TryParse(parValue, NumberStyles.Number, CultureInfo.InvariantCulture, out result))
         {
             return result;
         }
