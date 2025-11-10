@@ -19,7 +19,9 @@ public static class FishGenerator
     public const int RecordCount = 1_000_000;
 
     private const int BatchSize = 4000;
-    private const double TargetDurationSeconds = 10.0;
+    private const double TargetDurationSeconds = 45.0;
+    private const double MinimumDurationSeconds = 30.0;
+    private const double MaximumDurationSeconds = 60.0;
     private static readonly char[] Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".ToCharArray();
 
     /// <summary>
@@ -64,9 +66,17 @@ public static class FishGenerator
 
         stopwatch.Stop();
 
-        if (stopwatch.Elapsed < TimeSpan.FromSeconds(10))
+        var minimumDuration = TimeSpan.FromSeconds(MinimumDurationSeconds);
+        var maximumDuration = TimeSpan.FromSeconds(MaximumDurationSeconds);
+
+        if (stopwatch.Elapsed < minimumDuration)
         {
-            var remaining = TimeSpan.FromSeconds(10) - stopwatch.Elapsed;
+            var remaining = minimumDuration - stopwatch.Elapsed;
+            if (stopwatch.Elapsed + remaining > maximumDuration)
+            {
+                remaining = maximumDuration - stopwatch.Elapsed;
+            }
+
             if (remaining > TimeSpan.Zero)
             {
                 await Task.Delay(remaining, cancellationToken).ConfigureAwait(false);
@@ -79,6 +89,7 @@ public static class FishGenerator
     private static async Task DelayIfNeededAsync(Stopwatch stopwatch, int processed, CancellationToken cancellationToken)
     {
         var targetElapsed = TargetDurationSeconds * (processed / (double)RecordCount);
+        targetElapsed = Math.Min(targetElapsed, MaximumDurationSeconds);
         var elapsed = stopwatch.Elapsed.TotalSeconds;
 
         if (elapsed >= targetElapsed)
