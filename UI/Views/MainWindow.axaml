@@ -62,6 +62,7 @@
 
     <!-- Таблица с данными -->
     <DataGrid
+      x:Name="FishGrid"
       AutoGenerateColumns="False"
       CanUserResizeColumns="True"
       CanUserSortColumns="True"

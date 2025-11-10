@@ -123,6 +123,11 @@ public partial class MainWindowViewModel : ViewModelBase
     public Interaction<ViewModelBase, Fish?> ShowEditFishDialog { get; }
 
     /// <summary>
+    /// Запрос фокусировки на выбранной записи в таблице.
+    /// </summary>
+    public Interaction<Fish, Unit> FocusFishRequest { get; }
+
+    /// <summary>
     /// Команда для добавления пресноводной рыбы.
     /// </summary>
     public ReactiveCommand<Unit, Unit> AddFreshwaterFishCommand { get; }
@@ -177,6 +182,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public MainWindowViewModel()
     {
         ShowEditFishDialog = new Interaction<ViewModelBase, Fish?>();
+        FocusFishRequest = new Interaction<Fish, Unit>();
 
         AddFreshwaterFishCommand = ReactiveCommand.CreateFromTask(AddFreshwaterFishImplementation);
         AddSaltwaterFishCommand = ReactiveCommand.CreateFromTask(AddSaltwaterFishImplementation);
@@ -432,15 +438,24 @@ public partial class MainWindowViewModel : ViewModelBase
         UpdateFilterSummary(filter, minWeight, maxWeight);
 
         var selectionToRestore = parPreferredSelection ?? SelectedFish;
-        if (selectionToRestore != null && _filteredFish.Contains(selectionToRestore))
+        if (selectionToRestore != null)
         {
-            var previous = selectionToRestore;
-            SelectedFish = null;
-            SelectedFish = previous;
+            var restoredSelection = _filteredFish.FirstOrDefault(parFish => ReferenceEquals(parFish, selectionToRestore));
+            if (restoredSelection != null)
+            {
+                SelectedFish = null;
+                SelectedFish = restoredSelection;
+                _ = FocusFishRequest.Handle(restoredSelection);
+                return;
+            }
         }
-        else
+
+        var defaultSelection = _filteredFish.FirstOrDefault();
+        SelectedFish = defaultSelection;
+
+        if (defaultSelection != null)
         {
-            SelectedFish = _filteredFish.FirstOrDefault();
+            _ = FocusFishRequest.Handle(defaultSelection);
         }
     }
 

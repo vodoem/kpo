@@ -1,8 +1,10 @@
 using System;
+using System.Reactive;
 using System.Reactive.Disposables;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.ReactiveUI;
+using Avalonia.Threading;
 using Duz_vadim_project;
 using ReactiveUI;
 using UI.ViewModels;
@@ -28,6 +30,7 @@ public partial class MainWindow : ReactiveWindow<MainWindowViewModel>
         this.WhenActivated(disposables =>
         {
             ViewModel.ShowEditFishDialog.RegisterHandler(DoShowDialogAsync).DisposeWith(disposables);
+            ViewModel.FocusFishRequest.RegisterHandler(FocusSelectedFishAsync).DisposeWith(disposables);
         });
     }
 
@@ -55,6 +58,26 @@ public partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 
         var result = await dialog.ShowDialog<Fish?>(this);
         interaction.SetOutput(result);
+    }
+
+    /// <summary>
+    /// Обеспечивает перевод фокуса на выбранную запись после фильтрации.
+    /// </summary>
+    /// <param name="interaction">Контекст взаимодействия с информацией о выбранной рыбе.</param>
+    /// <returns>Задача, завершающаяся после установки фокуса.</returns>
+    private async Task FocusSelectedFishAsync(IInteractionContext<Fish, Unit> interaction)
+    {
+        await Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            if (FishGrid != null)
+            {
+                FishGrid.SelectedItem = interaction.Input;
+                FishGrid.ScrollIntoView(interaction.Input, null);
+                FishGrid.Focus();
+            }
+        });
+
+        interaction.SetOutput(Unit.Default);
     }
 
     /// <summary>
