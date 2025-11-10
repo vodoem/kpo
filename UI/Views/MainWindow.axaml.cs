@@ -67,15 +67,25 @@ public partial class MainWindow : ReactiveWindow<MainWindowViewModel>
     /// <returns>Задача, завершающаяся после установки фокуса.</returns>
     private async Task FocusSelectedFishAsync(IInteractionContext<Fish, Unit> interaction)
     {
-        await Dispatcher.UIThread.InvokeAsync(() =>
-        {
-            if (FishGrid != null)
+        await Dispatcher.UIThread.InvokeAsync(
+            () =>
             {
-                FishGrid.SelectedItem = interaction.Input;
-                FishGrid.ScrollIntoView(interaction.Input, null);
+                if (FishGrid == null)
+                {
+                    return;
+                }
+
+                if (!ReferenceEquals(FishGrid.SelectedItem, interaction.Input))
+                {
+                    FishGrid.SelectedItem = null;
+                    FishGrid.SelectedItem = interaction.Input;
+                }
+
+                var firstColumn = FishGrid.Columns.Count > 0 ? FishGrid.Columns[0] : null;
+                FishGrid.ScrollIntoView(interaction.Input, firstColumn);
                 FishGrid.Focus();
-            }
-        });
+            },
+            DispatcherPriority.Render);
 
         interaction.SetOutput(Unit.Default);
     }

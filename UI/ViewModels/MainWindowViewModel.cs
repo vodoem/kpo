@@ -432,12 +432,13 @@ public partial class MainWindowViewModel : ViewModelBase
             });
         }
 
+        var selectionToRestore = parPreferredSelection ?? SelectedFish;
+
         _filteredFish = query.ToList();
         this.RaisePropertyChanged(nameof(FishList));
 
         UpdateFilterSummary(filter, minWeight, maxWeight);
 
-        var selectionToRestore = parPreferredSelection ?? SelectedFish;
         if (selectionToRestore != null)
         {
             var restoredSelection = _filteredFish.FirstOrDefault(parFish => ReferenceEquals(parFish, selectionToRestore));
