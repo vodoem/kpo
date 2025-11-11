@@ -4,19 +4,23 @@ namespace UI.ViewModels.EditFish;
 
 
 /// <summary>
-/// ViewModel для редактирования тунца.
+/// Модель представления для редактирования сведений о тунцах.
 /// </summary>
 public partial class TunaEditor : FishEditor<Tuna>
 {
-  /// <summary>
-  /// Конструктор по умолчанию
-  /// </summary>
-  public TunaEditor() : base(null, false) { }
+    /// <summary>
+    /// Создаёт форму редактирования без входных данных.
+    /// </summary>
+    public TunaEditor() : base(null, false)
+    {
+    }
 
-  /// <summary>
-  /// Конструктор с параметрами
-  /// </summary>
-  /// <param name="instance">Редактируемый экземпляр</param>
-  /// <param name="isViewMode">Флаг режима просмотра</param>
-  public TunaEditor(Tuna? instance, bool isViewMode) : base(instance, isViewMode) { }
+    /// <summary>
+    /// Создаёт форму редактирования с учётом переданного экземпляра.
+    /// </summary>
+    /// <param name="instance">Редактируемая запись, допускающая значение null.</param>
+    /// <param name="isViewMode">Флаг режима просмотра.</param>
+    public TunaEditor(Tuna? instance, bool isViewMode) : base(instance, isViewMode)
+    {
+    }
 }

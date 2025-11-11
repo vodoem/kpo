@@ -41,8 +41,28 @@
         DockPanel.Dock="Right" />
     </DockPanel>
 
+    <DockPanel Margin="0,0,0,8" DockPanel.Dock="Top">
+      <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+        <TextBlock VerticalAlignment="Center" Text="Тип содержит:" />
+        <TextBox Width="140" Text="{Binding TypeFilter, UpdateSourceTrigger=PropertyChanged}" />
+        <TextBlock VerticalAlignment="Center" Text="Вес от:" />
+        <TextBox Width="80" HorizontalContentAlignment="Right" Text="{Binding WeightMinFilter}" />
+        <TextBlock VerticalAlignment="Center" Text="до:" />
+        <TextBox Width="80" HorizontalContentAlignment="Right" Text="{Binding WeightMaxFilter}" />
+        <Button Content="Применить" Command="{Binding ApplyFilterCommand}" />
+        <Button Content="Сброс" Command="{Binding ClearFilterCommand}" />
+      </StackPanel>
+
+      <TextBlock
+        DockPanel.Dock="Right"
+        Margin="8,0,0,0"
+        VerticalAlignment="Center"
+        Text="{Binding CurrentFilterSummary}" />
+    </DockPanel>
+
     <!-- Таблица с данными -->
     <DataGrid
+      x:Name="FishGrid"
       AutoGenerateColumns="False"
       CanUserResizeColumns="True"
       CanUserSortColumns="True"
