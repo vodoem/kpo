@@ -8,10 +8,7 @@
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
         Title="Рыбы">
-  
-
   <DockPanel Margin="8">
-    <!-- Верхняя панель кнопок -->
     <DockPanel Margin="0,0,0,8" DockPanel.Dock="Top">
       <StackPanel Orientation="Horizontal" Spacing="4">
         <ComboBox x:Name="FactorySelector" SelectedIndex="0" SelectionChanged="OnFactorySelectorChanged">
@@ -20,10 +17,10 @@
           <ComboBoxItem Content="Bream and Tuna Prototype Factory" />
           <ComboBoxItem Content="Carp and Mackerel Prototype Factory" />
         </ComboBox>
-        
+
         <Button Command="{Binding AddFreshwaterFishCommand}" Content="Добавить пресноводную рыбу" />
         <Button Command="{Binding AddSaltwaterFishCommand}" Content="Добавить морскую рыбу" />
-        
+
         <Button
           Command="{Binding EditCommand}"
           Content="Изменить"
@@ -41,8 +38,44 @@
         DockPanel.Dock="Right" />
     </DockPanel>
 
-    <!-- Таблица с данными -->
+    <DockPanel Margin="0,0,0,8" DockPanel.Dock="Top" VerticalAlignment="Center">
+      <Button
+        Width="140"
+        Content="{Binding FilterToggleText}"
+        Command="{Binding ToggleFilterVisibilityCommand}" />
+
+      <TextBlock
+        DockPanel.Dock="Right"
+        Margin="12,0,0,0"
+        VerticalAlignment="Center"
+        Text="{Binding CollapsedFilterSummary}"
+        IsVisible="{Binding IsFilterCollapsed}" />
+    </DockPanel>
+
+    <Border Margin="0,0,0,8"
+            Padding="8"
+            CornerRadius="4"
+            BorderBrush="{DynamicResource ThemeBorderBrush}"
+            BorderThickness="1"
+            IsVisible="{Binding IsFilterVisible}">
+      <StackPanel Spacing="6">
+        <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+          <TextBlock VerticalAlignment="Center" Text="Тип содержит:" />
+          <TextBox Width="140" Text="{Binding TypeFilter, UpdateSourceTrigger=PropertyChanged}" />
+          <TextBlock VerticalAlignment="Center" Text="Вес от:" />
+          <TextBox Width="80" HorizontalContentAlignment="Right" Text="{Binding WeightMinFilter}" />
+          <TextBlock VerticalAlignment="Center" Text="до:" />
+          <TextBox Width="80" HorizontalContentAlignment="Right" Text="{Binding WeightMaxFilter}" />
+          <Button Content="Применить" Command="{Binding ApplyFilterCommand}" />
+          <Button Content="Сброс" Command="{Binding ClearFilterCommand}" />
+        </StackPanel>
+
+        <TextBlock Text="{Binding CurrentFilterSummary}" Opacity="0.7" />
+      </StackPanel>
+    </Border>
+
     <DataGrid
+      x:Name="FishGrid"
       AutoGenerateColumns="False"
       CanUserResizeColumns="True"
       CanUserSortColumns="True"
