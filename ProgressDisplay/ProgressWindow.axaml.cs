@@ -7,11 +7,11 @@ namespace ProgressDisplay;
 /// </summary>
 public partial class ProgressWindow : Window
 {
-    /// <summary>
-    /// Создаёт новый экземпляр класса <see cref="ProgressWindow"/>.
-    /// </summary>
-    public ProgressWindow()
-    {
-        InitializeComponent();
-    }
+  /// <summary>
+  /// Создаёт новый экземпляр класса <see cref="ProgressWindow"/>.
+  /// </summary>
+  public ProgressWindow()
+  {
+    InitializeComponent();
+  }
 }
