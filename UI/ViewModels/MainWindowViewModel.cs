@@ -237,7 +237,11 @@ public partial class MainWindowViewModel : ViewModelBase
     GenerateTestFishCommand = ReactiveCommand.CreateFromTask(GenerateTestFishAsync);
     ApplyFilterCommand = ReactiveCommand.Create(() => ApplyFilter());
     ClearFilterCommand = ReactiveCommand.Create(ClearFilter);
-    ToggleFilterVisibilityCommand = ReactiveCommand.Create(() => IsFilterVisible = !IsFilterVisible);
+    ToggleFilterVisibilityCommand = ReactiveCommand.Create(
+      () =>
+      {
+        IsFilterVisible = !IsFilterVisible;
+      });
 
     InitializeFactories(0);
     ApplyFilter();
