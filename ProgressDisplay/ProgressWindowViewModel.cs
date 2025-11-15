@@ -45,7 +45,9 @@ public sealed class ProgressWindowViewModel : INotifyPropertyChanged
   /// </summary>
   private readonly RelayCommand _cancelCommand;
 
-  /// <inheritdoc />
+  /// <summary>
+  /// Событие, уведомляющее об изменении значения свойства.
+  /// </summary>
   public event PropertyChangedEventHandler? PropertyChanged;
 
   /// <summary>
@@ -180,6 +182,9 @@ public sealed class ProgressWindowViewModel : INotifyPropertyChanged
       _canExecute = parCanExecute ?? throw new ArgumentNullException(nameof(parCanExecute));
     }
 
+    /// <summary>
+    /// Событие, возникающее при изменении доступности команды.
+    /// </summary>
     public event EventHandler? CanExecuteChanged;
 
     /// <summary>

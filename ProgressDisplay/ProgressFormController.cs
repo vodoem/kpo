@@ -451,25 +451,38 @@ public sealed class ProgressFormController
       _controller = parController;
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Возвращает максимальное количество элементов, указанное при запуске операции.
+    /// </summary>
     public double Maximum => _controller._maximum;
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Возвращает токен отмены, активируемый при отмене операции пользователем.
+    /// </summary>
     public CancellationToken CancellationToken => _controller.CancellationToken;
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Отчитывается о продвижении выполнения и возвращает признак необходимости остановки.
+    /// </summary>
+    /// <param name="parProcessedCount">Количество обработанных элементов.</param>
+    /// <param name="parNewCaption">Необязательная новая подпись индикатора.</param>
+    /// <returns><c>true</c>, если следует прекратить выполнение.</returns>
     public bool ReportProgress(double parProcessedCount = 1, string? parNewCaption = null)
     {
       return _controller.ReportProgressInternal(parProcessedCount, parNewCaption);
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Запрашивает закрытие окна прогресса.
+    /// </summary>
     public void Close()
     {
       _controller.Close();
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Возвращает признак того, что операция была отменена пользователем.
+    /// </summary>
     public bool IsCancellationRequested => _controller.IsCancellationRequested;
   }
 }

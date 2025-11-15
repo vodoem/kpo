@@ -51,7 +51,18 @@
       <TextBlock
         VerticalAlignment="Center"
         Text="{Binding CollapsedFilterSummary}"
-        IsVisible="{Binding IsFilterCollapsed}" />
+        Opacity="0.7">
+        <TextBlock.Styles>
+          <Style Selector="TextBlock">
+            <Setter Property="IsVisible" Value="False" />
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding IsFilterCollapsed}" Value="True">
+                <Setter Property="IsVisible" Value="True" />
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </TextBlock.Styles>
+      </TextBlock>
     </StackPanel>
 
     <Border Margin="0,0,0,8"
@@ -72,7 +83,6 @@
           <Button Content="Сброс" Command="{Binding ClearFilterCommand}" />
         </StackPanel>
 
-        <TextBlock Text="{Binding CurrentFilterSummary}" Opacity="0.7" />
       </StackPanel>
     </Border>
 
