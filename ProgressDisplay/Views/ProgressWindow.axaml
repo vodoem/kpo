@@ -1,0 +1,53 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:ProgressDisplay"
+        x:Class="ProgressDisplay.ProgressWindow"
+        x:DataType="vm:ProgressWindowViewModel"
+        Width="380"
+        Height="200"
+        MinWidth="360"
+        MinHeight="200"
+        CanResize="False"
+        Title="Процесс">
+  <Border Margin="16"
+          Padding="20"
+          CornerRadius="8"
+          Background="{DynamicResource ThemeBackgroundBrush}"
+          BorderBrush="{DynamicResource ThemeBorderBrush}"
+          BorderThickness="1">
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+      <TextBlock Grid.Row="0"
+                 Margin="0,0,0,12"
+                 FontSize="16"
+                 Text="{Binding Caption}"
+                 TextWrapping="Wrap"
+                 VerticalAlignment="Center" />
+
+      <ProgressBar Grid.Row="1"
+                   Margin="0,0,0,12"
+                   Height="26"
+                   Minimum="0"
+                   Maximum="{Binding ProgressMaximum}"
+                   Value="{Binding ProgressValue}" />
+
+      <TextBlock Grid.Row="2"
+                 Margin="0,0,0,12"
+                 FontSize="13"
+                 Opacity="0.75"
+                 Text="{Binding Details}"
+                 TextWrapping="Wrap"
+                 VerticalAlignment="Top" />
+
+      <StackPanel Grid.Row="3"
+                  Orientation="Horizontal"
+                  HorizontalAlignment="Right"
+                  Spacing="8">
+        <Button MinWidth="120"
+                Height="32"
+                Content="{Binding CancelButtonText}"
+                IsEnabled="{Binding IsCancelEnabled}"
+                Command="{Binding CancelCommand}" />
+      </StackPanel>
+    </Grid>
+  </Border>
+</Window>
