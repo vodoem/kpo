@@ -4,7 +4,6 @@ using System.Globalization;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using Duz_vadim_project;
