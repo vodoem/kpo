@@ -1,14 +1,15 @@
 using System;
+using System.Reactive;
 using System.Reactive.Disposables;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.ReactiveUI;
+using Avalonia.Threading;
 using Duz_vadim_project;
 using ReactiveUI;
 using UI.ViewModels;
 using UI.ViewModels.EditFish;
 using UI.Views.EditFishWindows;
-
 
 namespace UI.Views;
 
@@ -28,14 +29,15 @@ public partial class MainWindow : ReactiveWindow<MainWindowViewModel>
     this.WhenActivated(disposables =>
     {
       ViewModel.ShowEditFishDialog.RegisterHandler(DoShowDialogAsync).DisposeWith(disposables);
+      ViewModel.FocusFishRequest.RegisterHandler(FocusSelectedFishAsync).DisposeWith(disposables);
     });
   }
 
   /// <summary>
-  /// Асинхронно отображает окно редактирования рыбы в зависимости от типа рыбы.
+  /// Асинхронно отображает окно редактирования рыбы в зависимости от её типа.
   /// </summary>
   /// <param name="interaction">Контекст взаимодействия для отображения окна редактирования.</param>
-  /// <returns>Задача, которая завершится, когда окно будет закрыто.</returns>
+  /// <returns>Задача, которая завершится после закрытия окна.</returns>
   private async Task DoShowDialogAsync(IInteractionContext<ViewModelBase, Fish?> interaction)
   {
     Window? dialog = interaction.Input switch
@@ -56,12 +58,53 @@ public partial class MainWindow : ReactiveWindow<MainWindowViewModel>
     var result = await dialog.ShowDialog<Fish?>(this);
     interaction.SetOutput(result);
   }
-  
+
   /// <summary>
-  /// Обработчик события изменения выбора фабрики в выпадающем списке
+  /// Обеспечивает перевод фокуса на выбранную запись после фильтрации.
   /// </summary>
-  /// <param name="parSender">Источник события</param>
-  /// <param name="parEventArgs">Аргументы события</param>
+  /// <param name="interaction">Контекст взаимодействия с информацией о выбранной рыбе.</param>
+  /// <returns>Задача, завершающаяся после установки фокуса.</returns>
+  private async Task FocusSelectedFishAsync(IInteractionContext<Fish, Unit> interaction)
+  {
+    await Dispatcher.UIThread.InvokeAsync(
+      () =>
+      {
+        if (FishGrid == null)
+        {
+          interaction.SetOutput(Unit.Default);
+          return;
+        }
+
+        void ApplyFocus()
+        {
+          if (FishGrid == null)
+          {
+            interaction.SetOutput(Unit.Default);
+            return;
+          }
+
+          if (!ReferenceEquals(FishGrid.SelectedItem, interaction.Input))
+          {
+            FishGrid.SelectedItem = null;
+            FishGrid.SelectedItem = interaction.Input;
+          }
+
+          var firstColumn = FishGrid.Columns.Count > 0 ? FishGrid.Columns[0] : null;
+          FishGrid.ScrollIntoView(interaction.Input, firstColumn);
+          FishGrid.Focus();
+          interaction.SetOutput(Unit.Default);
+        }
+
+        Dispatcher.UIThread.Post(ApplyFocus, DispatcherPriority.Render);
+      },
+      DispatcherPriority.Background);
+  }
+
+  /// <summary>
+  /// Обрабатывает изменение выбранной фабрики в выпадающем списке.
+  /// </summary>
+  /// <param name="parSender">Источник события.</param>
+  /// <param name="parEventArgs">Аргументы события.</param>
   private void OnFactorySelectorChanged(object parSender, SelectionChangedEventArgs parEventArgs)
   {
     if (parSender is ComboBox comboBox && ViewModel != null && comboBox.SelectedIndex >= 0)

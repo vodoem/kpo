@@ -13,20 +13,20 @@ namespace UI.Views.EditFishWindows;
 /// </summary>
 public partial class EditBreamWindow : ReactiveWindow<FishEditor<Bream>>
 {
-  /// <summary>
-  /// Конструктор окна редактирования леща.
-  /// </summary>
-  public EditBreamWindow()
-  {
-    InitializeComponent();
-
-    // Подписываемся на команду сохранения
-    this.WhenActivated(disposables =>
+    /// <summary>
+    /// Конструктор окна редактирования леща.
+    /// </summary>
+    public EditBreamWindow()
     {
-      disposables(ViewModel!.SaveChanges.Subscribe(Close));
-    });
+        InitializeComponent();
 
-    // Обработка кнопки "Отмена"
-    this.FindControl<Button>("CancelButton")!.Click += (_, _) => Close(null);
-  }
+        // Подписываемся на команду сохранения.
+        this.WhenActivated(disposables =>
+        {
+            disposables(ViewModel!.SaveChanges.Subscribe(Close));
+        });
+
+        // Обрабатываем нажатие кнопки «Отмена».
+        this.FindControl<Button>("CancelButton")!.Click += (_, _) => Close(null);
+    }
 }
