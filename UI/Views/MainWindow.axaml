@@ -38,20 +38,16 @@
         DockPanel.Dock="Right" />
     </DockPanel>
 
-    <Expander Margin="0,0,0,8"
-              DockPanel.Dock="Top"
-              IsExpanded="{Binding IsFilterVisible, Mode=TwoWay}">
-      <Expander.Header>
-        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-          <TextBlock VerticalAlignment="Center" Text="{Binding FilterToggleText}" />
-          <TextBlock VerticalAlignment="Center"
-                     Text="{Binding CollapsedFilterSummary}"
-                     Opacity="0.7"
-                     IsVisible="{Binding ShowCollapsedFilterSummary}" />
-        </StackPanel>
-      </Expander.Header>
+    <DockPanel Margin="0,0,0,8" DockPanel.Dock="Top">
+      <Expander DockPanel.Dock="Left"
+                IsExpanded="{Binding IsFilterVisible, Mode=TwoWay}">
+        <Expander.Header>
+          <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+            <TextBlock VerticalAlignment="Center" Text="{Binding FilterToggleText}" />
+          </StackPanel>
+        </Expander.Header>
 
-      <Border Margin="0,0,0,8"
+        <Border Margin="0,0,0,8"
               Padding="8"
               CornerRadius="4"
               BorderBrush="{DynamicResource ThemeBorderBrush}"
@@ -70,7 +66,15 @@
 
         </StackPanel>
       </Border>
-    </Expander>
+      </Expander>
+
+      <TextBlock DockPanel.Dock="Right"
+                 Margin="8,0,0,0"
+                 VerticalAlignment="Center"
+                 Text="{Binding CollapsedFilterSummary}"
+                 Opacity="0.7"
+                 IsVisible="{Binding IsFilterCollapsed}" />
+    </DockPanel>
 
     <DataGrid
       x:Name="FishGrid"

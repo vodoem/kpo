@@ -147,7 +147,6 @@ public partial class MainWindowViewModel : ViewModelBase
       {
         this.RaisePropertyChanged(nameof(IsFilterCollapsed));
         this.RaisePropertyChanged(nameof(FilterToggleText));
-        this.RaisePropertyChanged(nameof(ShowCollapsedFilterSummary));
       }
     }
   }
@@ -156,11 +155,6 @@ public partial class MainWindowViewModel : ViewModelBase
   /// Признак того, что панель фильтрации скрыта.
   /// </summary>
   public bool IsFilterCollapsed => !IsFilterVisible;
-
-  /// <summary>
-  /// Признак того, что компактное описание фильтра должно отображаться.
-  /// </summary>
-  public bool ShowCollapsedFilterSummary => !IsFilterVisible;
 
   /// <summary>
   /// Текст заголовка сворачиваемой панели фильтрации.
