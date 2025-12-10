@@ -3,6 +3,10 @@ using Duz_vadim_project;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Привязываем сервер к тому же адресу, который использует клиент (http://localhost:5102),
+// чтобы избежать ошибок подключения "конечный компьютер отверг запрос" при несогласованных портах.
+builder.WebHost.UseUrls("http://localhost:5102");
+
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
   options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
