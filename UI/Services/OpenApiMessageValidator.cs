@@ -3,6 +3,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Readers;
 
@@ -203,7 +204,9 @@ public sealed class OpenApiMessageValidator
         if (schema.Enum.Count > 0)
         {
           var value = element.GetString();
-          var enumValues = schema.Enum.Select(parX => parX?.GetString()).Where(parX => parX != null);
+          var enumValues = schema.Enum
+                                .Select(GetOpenApiStringValue)
+                                .Where(parX => parX != null);
           if (!enumValues.Contains(value))
           {
             throw new InvalidOperationException($"{context}: недопустимое значение '{value}'");
@@ -278,7 +281,10 @@ public sealed class OpenApiMessageValidator
       var resolved = ResolveSchema(option);
 
       if (resolved.Properties.TryGetValue(schema.Discriminator?.PropertyName ?? "typeName", out var propertySchema) &&
-          propertySchema.Enum.Select(parX => parX?.GetString()).Where(parX => parX != null).Contains(discriminator))
+          propertySchema.Enum
+                         .Select(GetOpenApiStringValue)
+                         .Where(parX => parX != null)
+                         .Contains(discriminator))
       {
         return resolved;
       }
@@ -290,5 +296,14 @@ public sealed class OpenApiMessageValidator
     }
 
     throw new InvalidOperationException($"Не удалось сопоставить тип '{discriminator}' со схемой oneOf");
+  }
+
+  private static string? GetOpenApiStringValue(IOpenApiAny? value)
+  {
+    return value switch
+    {
+      OpenApiString s => s.Value,
+      _ => null
+    };
   }
 }
