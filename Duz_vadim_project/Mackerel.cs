@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Duz_vadim_project;
 
@@ -10,6 +11,7 @@ public partial class Mackerel : SaltwaterFish
   /// <summary>
   /// Размер жабр
   /// </summary>
+  [Range(0, 500, ErrorMessage = "Размер жабр должен быть неотрицательным")]
   [ObservableProperty]
   private decimal _gillSize;
 
@@ -42,7 +44,7 @@ public partial class Mackerel : SaltwaterFish
   {
     // Реализация метода
   }
-  
+
   /// <summary>
   /// Копирование данных из другого объекта
   /// </summary>
@@ -60,7 +62,7 @@ public partial class Mackerel : SaltwaterFish
       throw new ArgumentException("Неверный тип объекта для копирования", nameof(parOther));
     }
   }
-  
+
   /// <summary>
   /// Конструктор копирования
   /// </summary>

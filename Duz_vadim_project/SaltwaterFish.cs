@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Duz_vadim_project;
 
@@ -10,6 +11,7 @@ public partial class SaltwaterFish : Fish
   /// <summary>
   /// Соленость воды в промилле
   /// </summary>
+  [Range(0, 100, ErrorMessage = "Соленость должна быть в разумных пределах")]
   [ObservableProperty]
   private decimal _salinity;
 
@@ -41,7 +43,7 @@ public partial class SaltwaterFish : Fish
   {
     // Реализация метода
   }
-  
+
   /// <summary>
   /// Копирование данных из другого объекта
   /// </summary>
@@ -59,7 +61,7 @@ public partial class SaltwaterFish : Fish
       throw new ArgumentException("Неверный тип объекта для копирования", nameof(parOther));
     }
   }
-  
+
   /// <summary>
   /// Конструктор копирования
   /// </summary>

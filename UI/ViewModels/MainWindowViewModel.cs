@@ -14,6 +14,7 @@ using Duz_vadim_project.DesignPatterns.PrototypeFactory;
 using ProgressDisplay;
 using ReactiveUI;
 using UI.Generator;
+using UI.Services;
 using UI.ViewModels.EditFish;
 
 namespace UI.ViewModels;
@@ -27,6 +28,11 @@ public partial class MainWindowViewModel : ViewModelBase
   /// Полный набор записей о рыбах.
   /// </summary>
   private readonly List<Fish> _allFish = new();
+
+  /// <summary>
+  /// HTTP-клиент для взаимодействия с сервером.
+  /// </summary>
+  private readonly FishApiClient _apiClient = new("http://localhost:5102");
 
   /// <summary>
   /// Текущий отфильтрованный список рыб.
@@ -198,6 +204,11 @@ public partial class MainWindowViewModel : ViewModelBase
   public ReactiveCommand<Unit, Unit> GenerateTestFishCommand { get; }
 
   /// <summary>
+  /// Команда перечитывания данных с сервера.
+  /// </summary>
+  public ReactiveCommand<Unit, Unit> RefreshFromServerCommand { get; }
+
+  /// <summary>
   /// Команда применения фильтра.
   /// </summary>
   public ReactiveCommand<Unit, Unit> ApplyFilterCommand { get; }
@@ -236,6 +247,7 @@ public partial class MainWindowViewModel : ViewModelBase
     DeleteCommand = ReactiveCommand.CreateFromTask(DeleteFishAsync, this.WhenAnyValue(parX => parX.CanEditOrDelete));
 
     GenerateTestFishCommand = ReactiveCommand.CreateFromTask(GenerateTestFishAsync);
+    RefreshFromServerCommand = ReactiveCommand.CreateFromTask(RefreshFromServerAsync);
     ApplyFilterCommand = ReactiveCommand.Create(() => ApplyFilter());
     ClearFilterCommand = ReactiveCommand.Create(ClearFilter);
     ToggleFilterVisibilityCommand = ReactiveCommand.Create(
@@ -261,8 +273,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     if (result != null)
     {
-      _allFish.Add(result);
-      ApplyFilter(result);
+      await AddOrAttachAsync(result);
     }
   }
 
@@ -279,8 +290,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     if (result != null)
     {
-      _allFish.Add(result);
-      ApplyFilter(result);
+      await AddOrAttachAsync(result);
     }
   }
 
@@ -311,7 +321,15 @@ public partial class MainWindowViewModel : ViewModelBase
     var result = await ShowEditFishDialog.Handle(editViewModel);
     if (result != null)
     {
-      SelectedFish.CopyFrom(result);
+      if (ShouldUseServer(result))
+      {
+        var updated = await _apiClient.UpdateAsync((Fish)result, CancellationToken.None);
+        SelectedFish.CopyFrom(updated);
+      }
+      else
+      {
+        SelectedFish.CopyFrom(result);
+      }
     }
   }
 
@@ -342,6 +360,11 @@ public partial class MainWindowViewModel : ViewModelBase
     var result = await ShowEditFishDialog.Handle(deleteViewModel);
     if (result != null && SelectedFish != null)
     {
+      if (ShouldUseServer(SelectedFish))
+      {
+        await _apiClient.DeleteAsync(SelectedFish, CancellationToken.None);
+      }
+
       _allFish.Remove(SelectedFish);
       ApplyFilter();
     }
@@ -505,6 +528,43 @@ public partial class MainWindowViewModel : ViewModelBase
     WeightMinFilter = string.Empty;
     WeightMaxFilter = string.Empty;
     ApplyFilter();
+  }
+
+  private async Task AddOrAttachAsync(Fish fish)
+  {
+    Fish stored = fish;
+
+    if (ShouldUseServer(fish))
+    {
+      stored = fish switch
+      {
+        Carp carp => await _apiClient.CreateAsync(carp, CancellationToken.None),
+        Mackerel mackerel => await _apiClient.CreateAsync(mackerel, CancellationToken.None),
+        _ => fish
+      };
+    }
+
+    _allFish.Add(stored);
+    ApplyFilter(stored);
+  }
+
+  private static bool ShouldUseServer(Fish fish) => fish is Carp || fish is Mackerel;
+
+  private async Task RefreshFromServerAsync()
+  {
+    var previousSelection = SelectedFish;
+    var serverFish = await _apiClient.GetAllAsync(CancellationToken.None);
+
+    _allFish.Clear();
+    _allFish.AddRange(serverFish);
+
+    Fish? preferred = null;
+    if (previousSelection != null)
+    {
+      preferred = _allFish.FirstOrDefault(fish => fish.Id == previousSelection.Id && fish.TypeName == previousSelection.TypeName);
+    }
+
+    ApplyFilter(preferred);
   }
 
   /// <summary>

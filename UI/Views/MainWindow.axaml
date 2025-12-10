@@ -21,6 +21,8 @@
         <Button Command="{Binding AddFreshwaterFishCommand}" Content="Добавить пресноводную рыбу" />
         <Button Command="{Binding AddSaltwaterFishCommand}" Content="Добавить морскую рыбу" />
 
+        <Button Command="{Binding RefreshFromServerCommand}" Content="Перечитать с сервера" />
+
         <Button
           Command="{Binding EditCommand}"
           Content="Изменить"

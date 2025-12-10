@@ -1,0 +1,291 @@
+openapi: 3.0.3
+info:
+  title: Fish registry API
+  version: 1.0.0
+  description: |
+    Сервис для хранения и управления иерархией рыб.
+    Идентификатор выдается сервером, а тип сущности определяется по полю `typeName`.
+    CRUD-операции добавления и изменения вынесены для двух видов третьего уровня (Carp и Mackerel)
+    в соответствии с требованием задания, при этом схемы всех типов присутствуют в компоненте `schemas`.
+servers:
+  - url: http://localhost:5102
+paths:
+  /list:
+    get:
+      summary: Получить полный список рыб
+      operationId: listFish
+      responses:
+        '200':
+          $ref: '#/components/responses/FishListResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /Carp:
+    post:
+      summary: Добавить нового карпа
+      operationId: addCarp
+      requestBody:
+        $ref: '#/components/requestBodies/CarpBody'
+      responses:
+        '201':
+          $ref: '#/components/responses/CarpResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /Carp/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      summary: Получить карпа по идентификатору
+      operationId: getCarp
+      responses:
+        '200':
+          $ref: '#/components/responses/CarpResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+    put:
+      summary: Обновить данные карпа
+      operationId: updateCarp
+      requestBody:
+        $ref: '#/components/requestBodies/CarpBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CarpResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+    delete:
+      summary: Удалить карпа
+      operationId: deleteCarp
+      responses:
+        '204':
+          description: Карп удален
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /Mackerel:
+    post:
+      summary: Добавить новую скумбрию
+      operationId: addMackerel
+      requestBody:
+        $ref: '#/components/requestBodies/MackerelBody'
+      responses:
+        '201':
+          $ref: '#/components/responses/MackerelResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /Mackerel/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      summary: Получить скумбрию по идентификатору
+      operationId: getMackerel
+      responses:
+        '200':
+          $ref: '#/components/responses/MackerelResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+    put:
+      summary: Обновить данные скумбрии
+      operationId: updateMackerel
+      requestBody:
+        $ref: '#/components/requestBodies/MackerelBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/MackerelResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+    delete:
+      summary: Удалить скумбрию
+      operationId: deleteMackerel
+      responses:
+        '204':
+          description: Скумбрия удалена
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      description: Уникальный идентификатор сущности
+      schema:
+        type: integer
+        minimum: 0
+  schemas:
+    Fish:
+      oneOf:
+        - $ref: '#/components/schemas/Carp'
+        - $ref: '#/components/schemas/Bream'
+        - $ref: '#/components/schemas/Mackerel'
+        - $ref: '#/components/schemas/Tuna'
+      discriminator:
+        propertyName: typeName
+        mapping:
+          Carp: '#/components/schemas/Carp'
+          Bream: '#/components/schemas/Bream'
+          Mackerel: '#/components/schemas/Mackerel'
+          Tuna: '#/components/schemas/Tuna'
+    FishBase:
+      type: object
+      required:
+        - typeName
+        - weight
+        - age
+        - isEdible
+      properties:
+        id:
+          type: integer
+          readOnly: true
+          description: Идентификатор, присваемый сервером
+          example: 42
+        typeName:
+          type: string
+          readOnly: true
+          description: Имя конкретного типа, используемое для десериализации
+        weight:
+          type: number
+          format: decimal
+          minimum: 0
+          description: Вес в граммах
+        age:
+          type: integer
+          minimum: 0
+          description: Возраст в годах
+        isEdible:
+          type: boolean
+          description: Является ли рыба съедобной
+    FreshwaterFish:
+      allOf:
+        - $ref: '#/components/schemas/FishBase'
+        - type: object
+          required:
+            - habitatDepth
+          properties:
+            habitatDepth:
+              type: number
+              format: decimal
+              minimum: 0
+              description: Глубина обитания
+    SaltwaterFish:
+      allOf:
+        - $ref: '#/components/schemas/FishBase'
+        - type: object
+          required:
+            - salinity
+          properties:
+            salinity:
+              type: number
+              format: decimal
+              minimum: 0
+              maximum: 100
+              description: Соленость воды
+    Carp:
+      allOf:
+        - $ref: '#/components/schemas/FreshwaterFish'
+        - type: object
+          required:
+            - scaleColor
+          properties:
+            typeName:
+              type: string
+              readOnly: true
+              enum: [Carp]
+            scaleColor:
+              type: string
+              maxLength: 100
+              description: Цвет чешуи
+    Bream:
+      allOf:
+        - $ref: '#/components/schemas/FreshwaterFish'
+        - type: object
+          required:
+            - bodyShape
+          properties:
+            typeName:
+              type: string
+              readOnly: true
+              enum: [Bream]
+            bodyShape:
+              type: string
+              maxLength: 100
+              description: Форма тела
+    Mackerel:
+      allOf:
+        - $ref: '#/components/schemas/SaltwaterFish'
+        - type: object
+          required:
+            - gillSize
+          properties:
+            typeName:
+              type: string
+              readOnly: true
+              enum: [Mackerel]
+            gillSize:
+              type: number
+              format: decimal
+              minimum: 0
+              description: Размер жабр
+    Tuna:
+      allOf:
+        - $ref: '#/components/schemas/SaltwaterFish'
+        - type: object
+          required:
+            - swimmingSpeed
+          properties:
+            typeName:
+              type: string
+              readOnly: true
+              enum: [Tuna]
+            swimmingSpeed:
+              type: number
+              format: decimal
+              minimum: 0
+              description: Скорость плавания
+  requestBodies:
+    CarpBody:
+      description: Данные карпа для создания или изменения
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Carp'
+    MackerelBody:
+      description: Данные скумбрии для создания или изменения
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Mackerel'
+  responses:
+    FishListResponse:
+      description: Список всех рыб
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Fish'
+    CarpResponse:
+      description: Ответ с данными карпа
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Carp'
+    MackerelResponse:
+      description: Ответ с данными скумбрии
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Mackerel'
+    ErrorResponse:
+      description: Ошибка при обработке запроса
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - message
+            properties:
+              message:
+                type: string
+              details:
+                type: object
+                additionalProperties: true

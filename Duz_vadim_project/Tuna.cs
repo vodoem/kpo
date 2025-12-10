@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Duz_vadim_project;
 
@@ -10,6 +11,7 @@ public partial class Tuna : SaltwaterFish
   /// <summary>
   /// Скорость плавания
   /// </summary>
+  [Range(0, 200, ErrorMessage = "Скорость плавания должна быть неотрицательной")]
   [ObservableProperty]
   private decimal _swimmingSpeed;
 
@@ -42,7 +44,7 @@ public partial class Tuna : SaltwaterFish
   {
     // Реализация метода
   }
-  
+
   /// <summary>
   /// Копирование данных из другого объекта
   /// </summary>
@@ -60,7 +62,7 @@ public partial class Tuna : SaltwaterFish
       throw new ArgumentException("Неверный тип объекта для копирования", nameof(parOther));
     }
   }
-  
+
   /// <summary>
   /// Конструктор копирования
   /// </summary>
