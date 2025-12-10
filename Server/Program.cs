@@ -157,7 +157,7 @@ internal sealed class FishRepository
   {
     if (!File.Exists(path))
     {
-      return Enumerable.Empty<Fish>();
+      yield break;
     }
 
     var json = File.ReadAllText(path);
