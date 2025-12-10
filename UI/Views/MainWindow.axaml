@@ -56,6 +56,13 @@
         IsVisible="{Binding !IsFilterCollapsed}" />
     </StackPanel>
 
+    <TextBlock
+      DockPanel.Dock="Top"
+      Foreground="IndianRed"
+      Margin="0,0,0,8"
+      Text="{Binding StatusMessage}"
+      IsVisible="{Binding HasStatusMessage}" />
+
     <Border Margin="0,0,0,8"
             Padding="8"
             CornerRadius="4"
