@@ -31,4 +31,12 @@
       <ProjectReference Include="..\Duz_vadim_project\Duz_vadim_project.csproj" />
       <ProjectReference Include="..\ProgressDisplay\ProgressDisplay.csproj" />
     </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.OpenApi.Readers" Version="1.6.12" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Include="..\openapi.yaml" Link="openapi.yaml" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
 </Project>

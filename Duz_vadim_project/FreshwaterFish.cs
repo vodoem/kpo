@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Duz_vadim_project;
 
@@ -10,6 +11,7 @@ public partial class FreshwaterFish : Fish
   /// <summary>
   /// Глубина обитания в метрах
   /// </summary>
+  [Range(0, 10_000, ErrorMessage = "Глубина обитания должна быть неотрицательной")]
   [ObservableProperty]
   private decimal _habitatDepth;
 
@@ -41,7 +43,7 @@ public partial class FreshwaterFish : Fish
   {
     // Реализация метода
   }
-  
+
   /// <summary>
   /// Копирование данных из другого объекта
   /// </summary>
@@ -59,7 +61,7 @@ public partial class FreshwaterFish : Fish
       throw new ArgumentException("Неверный тип объекта для копирования", nameof(parOther));
     }
   }
-  
+
   /// <summary>
   /// Конструктор копирования
   /// </summary>

@@ -21,6 +21,8 @@
         <Button Command="{Binding AddFreshwaterFishCommand}" Content="Добавить пресноводную рыбу" />
         <Button Command="{Binding AddSaltwaterFishCommand}" Content="Добавить морскую рыбу" />
 
+        <Button Command="{Binding RefreshFromServerCommand}" Content="Перечитать с сервера" />
+
         <Button
           Command="{Binding EditCommand}"
           Content="Изменить"
@@ -53,6 +55,13 @@
         Text="{Binding CollapsedFilterSummary}"
         IsVisible="{Binding !IsFilterCollapsed}" />
     </StackPanel>
+
+    <TextBlock
+      DockPanel.Dock="Top"
+      Foreground="IndianRed"
+      Margin="0,0,0,8"
+      Text="{Binding StatusMessage}"
+      IsVisible="{Binding HasStatusMessage}" />
 
     <Border Margin="0,0,0,8"
             Padding="8"

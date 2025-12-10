@@ -18,13 +18,17 @@ namespace UI.Views;
 /// </summary>
 public partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 {
-    /// <summary>
-    /// Конструктор главного окна.
-    /// </summary>
-    public MainWindow()
+  /// <summary>
+  /// Конструктор главного окна.
+  /// </summary>
+  public MainWindow()
+  {
+    InitializeComponent();
+
+    this.WhenActivated(disposables =>
     {
-      ViewModel.ShowEditFishDialog.RegisterHandler(DoShowDialogAsync).DisposeWith(disposables);
-      ViewModel.FocusFishRequest.RegisterHandler(FocusSelectedFishAsync).DisposeWith(disposables);
+      ViewModel?.ShowEditFishDialog.RegisterHandler(DoShowDialogAsync).DisposeWith(disposables);
+      ViewModel?.FocusFishRequest.RegisterHandler(FocusSelectedFishAsync).DisposeWith(disposables);
     });
   }
 
@@ -32,58 +36,21 @@ public partial class MainWindow : ReactiveWindow<MainWindowViewModel>
   /// Асинхронно отображает окно редактирования рыбы в зависимости от её типа.
   /// </summary>
   /// <param name="interaction">Контекст взаимодействия для отображения окна редактирования.</param>
-  /// <returns>Задача, которая завершится после закрытия окна.</returns>
   private async Task DoShowDialogAsync(IInteractionContext<ViewModelBase, Fish?> interaction)
   {
     Window? dialog = interaction.Input switch
     {
-        Window? dialog = interaction.Input switch
-        {
-            FishEditor<Bream> vm => new EditBreamWindow { DataContext = vm },
-            FishEditor<Carp> vm => new EditCarpWindow { DataContext = vm },
-            FishEditor<Mackerel> vm => new EditMackerelWindow { DataContext = vm },
-            FishEditor<Tuna> vm => new EditTunaWindow { DataContext = vm },
-            _ => null
-        };
+      FishEditor<Bream> vm => new EditBreamWindow { DataContext = vm },
+      FishEditor<Carp> vm => new EditCarpWindow { DataContext = vm },
+      FishEditor<Mackerel> vm => new EditMackerelWindow { DataContext = vm },
+      FishEditor<Tuna> vm => new EditTunaWindow { DataContext = vm },
+      _ => null
+    };
 
-        if (dialog is null)
-        {
-            interaction.SetOutput(null);
-            return;
-        }
-
-        var result = await dialog.ShowDialog<Fish?>(this);
-        interaction.SetOutput(result);
-    }
-
-    /// <summary>
-    /// Обеспечивает перевод фокуса на выбранную запись после фильтрации.
-    /// </summary>
-    /// <param name="interaction">Контекст взаимодействия с информацией о выбранной рыбе.</param>
-    /// <returns>Задача, завершающаяся после установки фокуса.</returns>
-    private async Task FocusSelectedFishAsync(IInteractionContext<Fish, Unit> interaction)
+    if (dialog is null)
     {
-        await Dispatcher.UIThread.InvokeAsync(
-            () =>
-            {
-                if (FishGrid == null)
-                {
-                    return;
-                }
-
-                if (!ReferenceEquals(FishGrid.SelectedItem, interaction.Input))
-                {
-                    FishGrid.SelectedItem = null;
-                    FishGrid.SelectedItem = interaction.Input;
-                }
-
-                var firstColumn = FishGrid.Columns.Count > 0 ? FishGrid.Columns[0] : null;
-                FishGrid.ScrollIntoView(interaction.Input, firstColumn);
-                FishGrid.Focus();
-            },
-            DispatcherPriority.Render);
-
-        interaction.SetOutput(Unit.Default);
+      interaction.SetOutput(null);
+      return;
     }
 
     var result = await dialog.ShowDialog<Fish?>(this);
@@ -94,26 +61,13 @@ public partial class MainWindow : ReactiveWindow<MainWindowViewModel>
   /// Обеспечивает перевод фокуса на выбранную запись после фильтрации.
   /// </summary>
   /// <param name="interaction">Контекст взаимодействия с информацией о выбранной рыбе.</param>
-  /// <returns>Задача, завершающаяся после установки фокуса.</returns>
   private async Task FocusSelectedFishAsync(IInteractionContext<Fish, Unit> interaction)
   {
     await Dispatcher.UIThread.InvokeAsync(
       () =>
       {
-        if (FishGrid == null)
+        if (FishGrid != null)
         {
-          interaction.SetOutput(Unit.Default);
-          return;
-        }
-
-        void ApplyFocus()
-        {
-          if (FishGrid == null)
-          {
-            interaction.SetOutput(Unit.Default);
-            return;
-          }
-
           if (!ReferenceEquals(FishGrid.SelectedItem, interaction.Input))
           {
             FishGrid.SelectedItem = null;
@@ -123,27 +77,23 @@ public partial class MainWindow : ReactiveWindow<MainWindowViewModel>
           var firstColumn = FishGrid.Columns.Count > 0 ? FishGrid.Columns[0] : null;
           FishGrid.ScrollIntoView(interaction.Input, firstColumn);
           FishGrid.Focus();
-          interaction.SetOutput(Unit.Default);
         }
 
-        Dispatcher.UIThread.Post(ApplyFocus, DispatcherPriority.Render);
+        interaction.SetOutput(Unit.Default);
       },
-      DispatcherPriority.Background);
+      DispatcherPriority.Render);
   }
 
   /// <summary>
   /// Обрабатывает изменение выбранной фабрики в выпадающем списке.
   /// </summary>
-  /// <param name="parSender">Источник события.</param>
-  /// <param name="parEventArgs">Аргументы события.</param>
-  private void OnFactorySelectorChanged(object parSender, SelectionChangedEventArgs parEventArgs)
+  /// <param name="sender">Источник события.</param>
+  /// <param name="eventArgs">Аргументы события.</param>
+  private void OnFactorySelectorChanged(object sender, SelectionChangedEventArgs eventArgs)
   {
-    if (parSender is ComboBox comboBox && ViewModel != null && comboBox.SelectedIndex >= 0)
+    if (sender is ComboBox comboBox && ViewModel != null && comboBox.SelectedIndex >= 0)
     {
-        if (parSender is ComboBox comboBox && ViewModel != null && comboBox.SelectedIndex >= 0)
-        {
-            ViewModel.InitializeFactories(comboBox.SelectedIndex);
-        }
+      ViewModel.InitializeFactories(comboBox.SelectedIndex);
     }
   }
 }

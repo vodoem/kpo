@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Duz_vadim_project;
 
@@ -10,6 +11,8 @@ public partial class Carp : FreshwaterFish
   /// <summary>
   /// Цвет чешуи
   /// </summary>
+  [Required(ErrorMessage = "Цвет чешуи обязателен")]
+  [StringLength(100, ErrorMessage = "Слишком длинное описание цвета")]
   [ObservableProperty]
   private string _scaleColor;
 
@@ -42,7 +45,7 @@ public partial class Carp : FreshwaterFish
   {
     // Реализация метода
   }
-  
+
   /// <summary>
   /// Копирование данных из другого объекта
   /// </summary>
@@ -60,7 +63,7 @@ public partial class Carp : FreshwaterFish
       throw new ArgumentException("Неверный тип объекта для копирования", nameof(parOther));
     }
   }
-  
+
   /// <summary>
   /// Конструктор копирования
   /// </summary>

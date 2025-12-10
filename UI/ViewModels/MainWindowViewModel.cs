@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net.Http;
 using System.Reactive;
 using System.Reactive.Linq;
 using System.Threading;
@@ -14,6 +15,7 @@ using Duz_vadim_project.DesignPatterns.PrototypeFactory;
 using ProgressDisplay;
 using ReactiveUI;
 using UI.Generator;
+using UI.Services;
 using UI.ViewModels.EditFish;
 
 namespace UI.ViewModels;
@@ -27,6 +29,11 @@ public partial class MainWindowViewModel : ViewModelBase
   /// Полный набор записей о рыбах.
   /// </summary>
   private readonly List<Fish> _allFish = new();
+
+  /// <summary>
+  /// HTTP-клиент для взаимодействия с сервером.
+  /// </summary>
+  private readonly FishApiClient _apiClient = new("http://localhost:5102");
 
   /// <summary>
   /// Текущий отфильтрованный список рыб.
@@ -64,6 +71,11 @@ public partial class MainWindowViewModel : ViewModelBase
   private bool _isFilterVisible = true;
 
   /// <summary>
+  /// Последнее сообщение о статусе серверных операций.
+  /// </summary>
+  private string _statusMessage = string.Empty;
+
+  /// <summary>
   /// Выбранная фабрика для создания объектов рыб.
   /// </summary>
   private IFishFactory? _selectedFactory;
@@ -72,6 +84,29 @@ public partial class MainWindowViewModel : ViewModelBase
   /// Возвращает текущий отфильтрованный список рыб для отображения в таблице.
   /// </summary>
   public IReadOnlyList<Fish> FishList => _filteredFish;
+
+  /// <summary>
+  /// Последнее сообщение о статусе серверных операций.
+  /// </summary>
+  public string StatusMessage
+  {
+    get => _statusMessage;
+    private set
+    {
+      if (value == _statusMessage)
+      {
+        return;
+      }
+
+      this.RaiseAndSetIfChanged(ref _statusMessage, value);
+      this.RaisePropertyChanged(nameof(HasStatusMessage));
+    }
+  }
+
+  /// <summary>
+  /// Признак наличия сообщения о статусе.
+  /// </summary>
+  public bool HasStatusMessage => !string.IsNullOrWhiteSpace(StatusMessage);
 
   /// <summary>
   /// Выбранная рыба.
@@ -198,6 +233,11 @@ public partial class MainWindowViewModel : ViewModelBase
   public ReactiveCommand<Unit, Unit> GenerateTestFishCommand { get; }
 
   /// <summary>
+  /// Команда перечитывания данных с сервера.
+  /// </summary>
+  public ReactiveCommand<Unit, Unit> RefreshFromServerCommand { get; }
+
+  /// <summary>
   /// Команда применения фильтра.
   /// </summary>
   public ReactiveCommand<Unit, Unit> ApplyFilterCommand { get; }
@@ -236,6 +276,7 @@ public partial class MainWindowViewModel : ViewModelBase
     DeleteCommand = ReactiveCommand.CreateFromTask(DeleteFishAsync, this.WhenAnyValue(parX => parX.CanEditOrDelete));
 
     GenerateTestFishCommand = ReactiveCommand.CreateFromTask(GenerateTestFishAsync);
+    RefreshFromServerCommand = ReactiveCommand.CreateFromTask(RefreshFromServerAsync);
     ApplyFilterCommand = ReactiveCommand.Create(() => ApplyFilter());
     ClearFilterCommand = ReactiveCommand.Create(ClearFilter);
     ToggleFilterVisibilityCommand = ReactiveCommand.Create(
@@ -261,8 +302,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     if (result != null)
     {
-      _allFish.Add(result);
-      ApplyFilter(result);
+      await AddOrAttachAsync(result);
     }
   }
 
@@ -279,8 +319,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     if (result != null)
     {
-      _allFish.Add(result);
-      ApplyFilter(result);
+      await AddOrAttachAsync(result);
     }
   }
 
@@ -311,7 +350,21 @@ public partial class MainWindowViewModel : ViewModelBase
     var result = await ShowEditFishDialog.Handle(editViewModel);
     if (result != null)
     {
-      SelectedFish.CopyFrom(result);
+      if (ShouldUseServer(result))
+      {
+        var updated = await TryServerCallAsync(() => _apiClient.UpdateAsync((Fish)result, CancellationToken.None),
+          "Не удалось обновить запись на сервере");
+
+        if (updated != null)
+        {
+          SelectedFish.CopyFrom(updated);
+        }
+      }
+      else
+      {
+        SelectedFish.CopyFrom(result);
+        StatusMessage = string.Empty;
+      }
     }
   }
 
@@ -342,8 +395,20 @@ public partial class MainWindowViewModel : ViewModelBase
     var result = await ShowEditFishDialog.Handle(deleteViewModel);
     if (result != null && SelectedFish != null)
     {
+      if (ShouldUseServer(SelectedFish))
+      {
+        var deleted = await TryServerCallAsync(() => _apiClient.DeleteAsync(SelectedFish, CancellationToken.None),
+          "Не удалось удалить запись на сервере");
+
+        if (!deleted)
+        {
+          return;
+        }
+      }
+
       _allFish.Remove(SelectedFish);
       ApplyFilter();
+      StatusMessage = string.Empty;
     }
   }
 
@@ -505,6 +570,99 @@ public partial class MainWindowViewModel : ViewModelBase
     WeightMinFilter = string.Empty;
     WeightMaxFilter = string.Empty;
     ApplyFilter();
+  }
+
+  private async Task<T?> TryServerCallAsync<T>(Func<Task<T>> action, string context)
+  {
+    try
+    {
+      var result = await action();
+      StatusMessage = string.Empty;
+      return result;
+    }
+    catch (HttpRequestException ex)
+    {
+      StatusMessage = $"{context}: {ex.Message}";
+    }
+    catch (Exception ex)
+    {
+      StatusMessage = $"{context}: {ex.Message}";
+    }
+
+    return default;
+  }
+
+  private async Task<bool> TryServerCallAsync(Func<Task> action, string context)
+  {
+    try
+    {
+      await action();
+      StatusMessage = string.Empty;
+      return true;
+    }
+    catch (HttpRequestException ex)
+    {
+      StatusMessage = $"{context}: {ex.Message}";
+    }
+    catch (Exception ex)
+    {
+      StatusMessage = $"{context}: {ex.Message}";
+    }
+
+    return false;
+  }
+
+  private async Task AddOrAttachAsync(Fish fish)
+  {
+    Fish stored = fish;
+
+    if (ShouldUseServer(fish))
+    {
+      stored = fish switch
+      {
+        Carp carp => await TryServerCallAsync(() => _apiClient.CreateAsync(carp, CancellationToken.None),
+          "Не удалось сохранить карпа на сервере") ?? stored,
+        Mackerel mackerel => await TryServerCallAsync(
+            () => _apiClient.CreateAsync(mackerel, CancellationToken.None),
+            "Не удалось сохранить скумбрию на сервере")
+          ?? stored,
+        _ => fish
+      };
+
+      if (ReferenceEquals(stored, fish))
+      {
+        return;
+      }
+    }
+
+    _allFish.Add(stored);
+    ApplyFilter(stored);
+    StatusMessage = string.Empty;
+  }
+
+  private static bool ShouldUseServer(Fish fish) => fish is Carp || fish is Mackerel;
+
+  private async Task RefreshFromServerAsync()
+  {
+    var previousSelection = SelectedFish;
+    var serverFish = await TryServerCallAsync(() => _apiClient.GetAllAsync(CancellationToken.None),
+      "Не удалось получить список с сервера");
+
+    if (serverFish == null)
+    {
+      return;
+    }
+
+    _allFish.Clear();
+    _allFish.AddRange(serverFish);
+
+    Fish? preferred = null;
+    if (previousSelection != null)
+    {
+      preferred = _allFish.FirstOrDefault(fish => fish.Id == previousSelection.Id && fish.TypeName == previousSelection.TypeName);
+    }
+
+    ApplyFilter(preferred);
   }
 
   /// <summary>
