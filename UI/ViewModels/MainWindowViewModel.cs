@@ -93,10 +93,13 @@ public partial class MainWindowViewModel : ViewModelBase
     get => _statusMessage;
     private set
     {
-      if (this.RaiseAndSetIfChanged(ref _statusMessage, value))
+      if (value == _statusMessage)
       {
-        this.RaisePropertyChanged(nameof(HasStatusMessage));
+        return;
       }
+
+      this.RaiseAndSetIfChanged(ref _statusMessage, value);
+      this.RaisePropertyChanged(nameof(HasStatusMessage));
     }
   }
 
