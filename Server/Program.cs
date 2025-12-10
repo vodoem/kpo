@@ -202,13 +202,15 @@ internal sealed class FishRepository
       if (fish != null)
       {
         // При чтении старых файлов могли отсутствовать обязательные поля.
-        if (fish is SaltwaterFish && !element.TryGetProperty("salinity", out _))
+        if (fish is SaltwaterFish saltwater && !element.TryGetProperty("salinity", out _))
         {
+          saltwater.Salinity = saltwater.Salinity; // фиксируем значение, чтобы свойство точно попало в JSON при пересохранении
           rewritten = true;
         }
 
-        if (fish is FreshwaterFish && !element.TryGetProperty("habitatDepth", out _))
+        if (fish is FreshwaterFish fresh && !element.TryGetProperty("habitatDepth", out _))
         {
+          fresh.HabitatDepth = fresh.HabitatDepth;
           rewritten = true;
         }
 
