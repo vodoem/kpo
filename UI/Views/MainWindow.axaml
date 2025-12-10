@@ -38,41 +38,29 @@
         DockPanel.Dock="Right" />
     </DockPanel>
 
-    <StackPanel Margin="0,0,0,8"
-                DockPanel.Dock="Top"
-                Orientation="Horizontal"
-                VerticalAlignment="Center"
-                Spacing="8">
-      <Button
-        Width="140"
-        Content="{Binding FilterToggleText}"
-        Command="{Binding ToggleFilterVisibilityCommand}" />
+    <Expander Margin="0,0,0,8" DockPanel.Dock="Top" IsExpanded="{Binding IsFilterVisible, Mode=TwoWay}">
+      <Expander.Header>
+        <TextBlock VerticalAlignment="Center" Text="{Binding CollapsedFilterSummary}" />
+      </Expander.Header>
 
-      <TextBlock
-        VerticalAlignment="Center"
-        Text="{Binding CollapsedFilterSummary}"
-        IsVisible="{Binding !IsFilterCollapsed}" />
-    </StackPanel>
-
-    <Border Margin="0,0,0,8"
-            Padding="8"
-            CornerRadius="4"
-            BorderBrush="{DynamicResource ThemeBorderBrush}"
-            BorderThickness="1"
-            IsVisible="{Binding IsFilterVisible}">
-      <StackPanel Spacing="6">
-        <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-          <TextBlock VerticalAlignment="Center" Text="Тип содержит:" />
-          <TextBox Width="140" Text="{Binding TypeFilter, UpdateSourceTrigger=PropertyChanged}" />
-          <TextBlock VerticalAlignment="Center" Text="Вес от:" />
-          <TextBox Width="80" HorizontalContentAlignment="Right" Text="{Binding WeightMinFilter}" />
-          <TextBlock VerticalAlignment="Center" Text="до:" />
-          <TextBox Width="80" HorizontalContentAlignment="Right" Text="{Binding WeightMaxFilter}" />
-          <Button Content="Применить" Command="{Binding ApplyFilterCommand}" />
-          <Button Content="Сброс" Command="{Binding ClearFilterCommand}" />
+      <Border Padding="8"
+              CornerRadius="4"
+              BorderBrush="{DynamicResource ThemeBorderBrush}"
+              BorderThickness="1">
+        <StackPanel Spacing="6">
+          <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+            <TextBlock VerticalAlignment="Center" Text="Тип содержит:" />
+            <TextBox Width="140" Text="{Binding TypeFilter, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBlock VerticalAlignment="Center" Text="Вес от:" />
+            <TextBox Width="80" HorizontalContentAlignment="Right" Text="{Binding WeightMinFilter}" />
+            <TextBlock VerticalAlignment="Center" Text="до:" />
+            <TextBox Width="80" HorizontalContentAlignment="Right" Text="{Binding WeightMaxFilter}" />
+            <Button Content="Применить" Command="{Binding ApplyFilterCommand}" />
+            <Button Content="Сброс" Command="{Binding ClearFilterCommand}" />
+          </StackPanel>
         </StackPanel>
-      </StackPanel>
-    </Border>
+      </Border>
+    </Expander>
 
     <DataGrid
       x:Name="FishGrid"
