@@ -98,8 +98,15 @@ internal sealed class FishRepository
   public FishRepository(string storagePath)
   {
     _storagePath = storagePath;
-    _fish = Load(storagePath).ToList();
+    var (fish, rewritten) = LoadNormalized(storagePath);
+
+    _fish = fish.ToList();
     _nextId = _fish.Count == 0 ? 1 : _fish.Max(f => f.Id) + 1;
+
+    if (rewritten)
+    {
+      Save();
+    }
   }
 
   public JsonSerializerOptions JsonOptions { get; } = new()
@@ -157,11 +164,14 @@ internal sealed class FishRepository
     File.WriteAllText(_storagePath, json);
   }
 
-  private IEnumerable<Fish> Load(string path)
+  private (IEnumerable<Fish> Fish, bool HasNormalizedMissingFields) LoadNormalized(string path)
   {
+    var fishes = new List<Fish>();
+    var rewritten = false;
+
     if (!File.Exists(path))
     {
-      yield break;
+      return (fishes, rewritten);
     }
 
     var json = File.ReadAllText(path);
@@ -191,8 +201,21 @@ internal sealed class FishRepository
       var fish = (Fish?)element.Deserialize(type, JsonOptions);
       if (fish != null)
       {
-        yield return fish;
+        // При чтении старых файлов могли отсутствовать обязательные поля.
+        if (fish is SaltwaterFish && !element.TryGetProperty("salinity", out _))
+        {
+          rewritten = true;
+        }
+
+        if (fish is FreshwaterFish && !element.TryGetProperty("habitatDepth", out _))
+        {
+          rewritten = true;
+        }
+
+        fishes.Add(fish);
       }
     }
+
+    return (fishes, rewritten);
   }
 }
