@@ -8,6 +8,20 @@ namespace Duz_vadim_project;
 public partial class Fish : ObservableObject, ICloneable
 {
   /// <summary>
+  /// Бэкинг-филд для идентификатора.
+  /// </summary>
+  private int _id;
+
+  /// <summary>
+  /// Уникальный идентификатор экземпляра. Значение назначается на сервере.
+  /// </summary>
+  public int Id
+  {
+    get => _id;
+    internal set => SetProperty(ref _id, value);
+  }
+
+  /// <summary>
   /// Вес рыбы в граммах
   /// </summary>
   [ObservableProperty]
@@ -24,17 +38,18 @@ public partial class Fish : ObservableObject, ICloneable
   /// </summary>
   [ObservableProperty]
   private bool _isEdible;
-  
+
   /// <summary>
   /// Строкове представление типа объекта
   /// </summary>
-  public virtual string TypeName => GetType().Name;
+  public string TypeName => GetType().Name;
 
   /// <summary>
   /// Конструктор без параметров
   /// </summary>
   public Fish()
   {
+    _id = 0;
     _weight = 0.0m;
     _age = 0;
     _isEdible = false;
@@ -48,6 +63,7 @@ public partial class Fish : ObservableObject, ICloneable
   /// <param name="parIsEdible">Является ли рыба съедобной</param>
   public Fish(decimal parWeight, int parAge, bool parIsEdible)
   {
+    _id = 0;
     _weight = parWeight;
     _age = parAge;
     _isEdible = parIsEdible;
@@ -64,6 +80,7 @@ public partial class Fish : ObservableObject, ICloneable
       throw new ArgumentNullException(nameof(parOther), "Объект для копирования не может быть null");
     }
 
+    Id = parOther.Id;
     Weight = parOther.Weight;
     Age = parOther.Age;
     IsEdible = parOther.IsEdible;
@@ -75,6 +92,7 @@ public partial class Fish : ObservableObject, ICloneable
   /// <param name="parParOther">Копируемый объект</param>
   public Fish(Fish parParOther)
   {
+    _id = parParOther._id;
     _weight = parParOther._weight;
     _age = parParOther._age;
     _isEdible = parParOther._isEdible;

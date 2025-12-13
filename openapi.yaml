@@ -1,0 +1,274 @@
+openapi: 3.0.3
+info:
+  title: Рыбное хранилище
+  version: 1.0.0
+  description: |
+    Сервис управления объектами иерархии Fish/FreshwaterFish/SaltwaterFish.
+    Уникальные идентификаторы назначаются на сервере и возвращаются в ответах.
+servers:
+  - url: https://api.example.com
+paths:
+  /list:
+    get:
+      summary: Получить списки всех рыб по типам
+      operationId: getFishLists
+      responses:
+        '200':
+          $ref: '#/components/responses/FishCollectionsResponse'
+  /Bream:
+    post:
+      summary: Создать нового леща
+      operationId: createBream
+      requestBody:
+        $ref: '#/components/requestBodies/BreamCreate'
+      responses:
+        '201':
+          $ref: '#/components/responses/BreamCreated'
+  /Bream/{id}:
+    parameters:
+      - $ref: '#/components/parameters/FishId'
+    get:
+      summary: Получить данные леща
+      operationId: getBreamById
+      responses:
+        '200':
+          $ref: '#/components/responses/BreamResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      summary: Обновить данные леща
+      operationId: updateBream
+      requestBody:
+        $ref: '#/components/requestBodies/BreamUpdate'
+      responses:
+        '200':
+          $ref: '#/components/responses/BreamResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /Tuna:
+    post:
+      summary: Создать нового тунца
+      operationId: createTuna
+      requestBody:
+        $ref: '#/components/requestBodies/TunaCreate'
+      responses:
+        '201':
+          $ref: '#/components/responses/TunaCreated'
+  /Tuna/{id}:
+    parameters:
+      - $ref: '#/components/parameters/FishId'
+    get:
+      summary: Получить данные тунца
+      operationId: getTunaById
+      responses:
+        '200':
+          $ref: '#/components/responses/TunaResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      summary: Обновить данные тунца
+      operationId: updateTuna
+      requestBody:
+        $ref: '#/components/requestBodies/TunaUpdate'
+      responses:
+        '200':
+          $ref: '#/components/responses/TunaResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  parameters:
+    FishId:
+      name: id
+      in: path
+      required: true
+      description: Уникальный идентификатор объекта
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+  schemas:
+    Fish:
+      type: object
+      required:
+        - id
+        - typeName
+        - weight
+        - age
+        - isEdible
+      properties:
+        id:
+          type: integer
+          format: int32
+          readOnly: true
+          description: Уникальный идентификатор, назначаемый сервером.
+        typeName:
+          type: string
+          readOnly: true
+          description: Имя конкретного типа для десериализации.
+          example: Fish
+        weight:
+          type: number
+          format: decimal
+          description: Вес рыбы в граммах.
+        age:
+          type: integer
+          format: int32
+          description: Возраст рыбы в годах.
+        isEdible:
+          type: boolean
+          description: Является ли рыба съедобной.
+    FreshwaterFish:
+      allOf:
+        - $ref: '#/components/schemas/Fish'
+        - type: object
+          required:
+            - habitatDepth
+          properties:
+            habitatDepth:
+              type: number
+              format: decimal
+              description: Глубина обитания в метрах.
+    SaltwaterFish:
+      allOf:
+        - $ref: '#/components/schemas/Fish'
+        - type: object
+          required:
+            - salinity
+          properties:
+            salinity:
+              type: number
+              format: decimal
+              description: Соленость воды в промилле.
+    Bream:
+      allOf:
+        - $ref: '#/components/schemas/FreshwaterFish'
+        - type: object
+          required:
+            - bodyShape
+          properties:
+            bodyShape:
+              type: string
+              description: Форма тела леща.
+              example: Овальная
+    Carp:
+      allOf:
+        - $ref: '#/components/schemas/FreshwaterFish'
+        - type: object
+          required:
+            - scaleColor
+          properties:
+            scaleColor:
+              type: string
+              description: Цвет чешуи карпа.
+              example: Золотистый
+    Mackerel:
+      allOf:
+        - $ref: '#/components/schemas/SaltwaterFish'
+        - type: object
+          required:
+            - gillSize
+          properties:
+            gillSize:
+              type: number
+              format: decimal
+              description: Размер жабр скумбрии.
+    Tuna:
+      allOf:
+        - $ref: '#/components/schemas/SaltwaterFish'
+        - type: object
+          required:
+            - swimmingSpeed
+          properties:
+            swimmingSpeed:
+              type: number
+              format: decimal
+              description: Скорость плавания тунца.
+    FishCollections:
+      type: object
+      properties:
+        breams:
+          type: array
+          items:
+            $ref: '#/components/schemas/Bream'
+        carps:
+          type: array
+          items:
+            $ref: '#/components/schemas/Carp'
+        mackerels:
+          type: array
+          items:
+            $ref: '#/components/schemas/Mackerel'
+        tunas:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tuna'
+  requestBodies:
+    BreamCreate:
+      description: Данные для создания леща. Поля id и typeName игнорируются сервером.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Bream'
+    BreamUpdate:
+      description: Данные для обновления леща. Идентификатор задается в пути.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Bream'
+    TunaCreate:
+      description: Данные для создания тунца. Поля id и typeName игнорируются сервером.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Tuna'
+    TunaUpdate:
+      description: Данные для обновления тунца. Идентификатор задается в пути.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Tuna'
+  responses:
+    FishCollectionsResponse:
+      description: Списки всех рыб по типам.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FishCollections'
+    BreamCreated:
+      description: Лещ создан.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Bream'
+    BreamResponse:
+      description: Данные о лещe.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Bream'
+    TunaCreated:
+      description: Тунец создан.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Tuna'
+    TunaResponse:
+      description: Данные о тунце.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Tuna'
+    NotFound:
+      description: Объект не найден.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Объект не найден
