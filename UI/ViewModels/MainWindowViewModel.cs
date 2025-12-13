@@ -4,7 +4,6 @@ using System.Globalization;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using Duz_vadim_project;
@@ -142,25 +141,8 @@ public partial class MainWindowViewModel : ViewModelBase
   public bool IsFilterVisible
   {
     get => _isFilterVisible;
-    set
-    {
-      if (this.RaiseAndSetIfChanged(ref _isFilterVisible, value))
-      {
-        this.RaisePropertyChanged(nameof(IsFilterCollapsed));
-        this.RaisePropertyChanged(nameof(FilterToggleText));
-      }
-    }
+    set => this.RaiseAndSetIfChanged(ref _isFilterVisible, value);
   }
-
-  /// <summary>
-  /// Признак того, что панель фильтрации скрыта.
-  /// </summary>
-  public bool IsFilterCollapsed => !IsFilterVisible;
-
-  /// <summary>
-  /// Подпись кнопки переключения состояния фильтра.
-  /// </summary>
-  public string FilterToggleText => IsFilterVisible ? "Скрыть фильтр" : "Показать фильтр";
 
   /// <summary>
   /// Взаимодействие с диалоговым окном редактирования рыбы.
@@ -208,11 +190,6 @@ public partial class MainWindowViewModel : ViewModelBase
   public ReactiveCommand<Unit, Unit> ClearFilterCommand { get; }
 
   /// <summary>
-  /// Команда переключения отображения панели фильтров.
-  /// </summary>
-  public ReactiveCommand<Unit, Unit> ToggleFilterVisibilityCommand { get; }
-
-  /// <summary>
   /// Свойство для доступа к выбранной фабрике.
   /// </summary>
   public IFishFactory? SelectedFactory
@@ -238,11 +215,6 @@ public partial class MainWindowViewModel : ViewModelBase
     GenerateTestFishCommand = ReactiveCommand.CreateFromTask(GenerateTestFishAsync);
     ApplyFilterCommand = ReactiveCommand.Create(() => ApplyFilter());
     ClearFilterCommand = ReactiveCommand.Create(ClearFilter);
-    ToggleFilterVisibilityCommand = ReactiveCommand.Create(
-      () =>
-      {
-        IsFilterVisible = !IsFilterVisible;
-      });
 
     InitializeFactories(0);
     ApplyFilter();
