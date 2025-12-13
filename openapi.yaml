@@ -15,64 +15,64 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/FishCollectionsResponse'
-  /Bream:
+  /Carp:
     post:
-      summary: Создать нового леща
-      operationId: createBream
+      summary: Создать нового карпа
+      operationId: createCarp
       requestBody:
-        $ref: '#/components/requestBodies/BreamCreate'
+        $ref: '#/components/requestBodies/CarpCreate'
       responses:
         '201':
-          $ref: '#/components/responses/BreamCreated'
-  /Bream/{id}:
+          $ref: '#/components/responses/CarpCreated'
+  /Carp/{id}:
     parameters:
       - $ref: '#/components/parameters/FishId'
     get:
-      summary: Получить данные леща
-      operationId: getBreamById
+      summary: Получить данные карпа
+      operationId: getCarpById
       responses:
         '200':
-          $ref: '#/components/responses/BreamResponse'
+          $ref: '#/components/responses/CarpResponse'
         '404':
           $ref: '#/components/responses/NotFound'
     put:
-      summary: Обновить данные леща
-      operationId: updateBream
+      summary: Обновить данные карпа
+      operationId: updateCarp
       requestBody:
-        $ref: '#/components/requestBodies/BreamUpdate'
+        $ref: '#/components/requestBodies/CarpUpdate'
       responses:
         '200':
-          $ref: '#/components/responses/BreamResponse'
+          $ref: '#/components/responses/CarpResponse'
         '404':
           $ref: '#/components/responses/NotFound'
-  /Tuna:
+  /Mackerel:
     post:
-      summary: Создать нового тунца
-      operationId: createTuna
+      summary: Создать новую скумбрию
+      operationId: createMackerel
       requestBody:
-        $ref: '#/components/requestBodies/TunaCreate'
+        $ref: '#/components/requestBodies/MackerelCreate'
       responses:
         '201':
-          $ref: '#/components/responses/TunaCreated'
-  /Tuna/{id}:
+          $ref: '#/components/responses/MackerelCreated'
+  /Mackerel/{id}:
     parameters:
       - $ref: '#/components/parameters/FishId'
     get:
-      summary: Получить данные тунца
-      operationId: getTunaById
+      summary: Получить данные скумбрии
+      operationId: getMackerelById
       responses:
         '200':
-          $ref: '#/components/responses/TunaResponse'
+          $ref: '#/components/responses/MackerelResponse'
         '404':
           $ref: '#/components/responses/NotFound'
     put:
-      summary: Обновить данные тунца
-      operationId: updateTuna
+      summary: Обновить данные скумбрии
+      operationId: updateMackerel
       requestBody:
-        $ref: '#/components/requestBodies/TunaUpdate'
+        $ref: '#/components/requestBodies/MackerelUpdate'
       responses:
         '200':
-          $ref: '#/components/responses/TunaResponse'
+          $ref: '#/components/responses/MackerelResponse'
         '404':
           $ref: '#/components/responses/NotFound'
 components:
@@ -139,17 +139,6 @@ components:
               type: number
               format: decimal
               description: Соленость воды в промилле.
-    Bream:
-      allOf:
-        - $ref: '#/components/schemas/FreshwaterFish'
-        - type: object
-          required:
-            - bodyShape
-          properties:
-            bodyShape:
-              type: string
-              description: Форма тела леща.
-              example: Овальная
     Carp:
       allOf:
         - $ref: '#/components/schemas/FreshwaterFish'
@@ -172,24 +161,9 @@ components:
               type: number
               format: decimal
               description: Размер жабр скумбрии.
-    Tuna:
-      allOf:
-        - $ref: '#/components/schemas/SaltwaterFish'
-        - type: object
-          required:
-            - swimmingSpeed
-          properties:
-            swimmingSpeed:
-              type: number
-              format: decimal
-              description: Скорость плавания тунца.
     FishCollections:
       type: object
       properties:
-        breams:
-          type: array
-          items:
-            $ref: '#/components/schemas/Bream'
         carps:
           type: array
           items:
@@ -198,39 +172,35 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Mackerel'
-        tunas:
-          type: array
-          items:
-            $ref: '#/components/schemas/Tuna'
   requestBodies:
-    BreamCreate:
-      description: Данные для создания леща. Поля id и typeName игнорируются сервером.
+    CarpCreate:
+      description: Данные для создания карпа. Поля id и typeName игнорируются сервером.
       required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Bream'
-    BreamUpdate:
-      description: Данные для обновления леща. Идентификатор задается в пути.
+            $ref: '#/components/schemas/Carp'
+    CarpUpdate:
+      description: Данные для обновления карпа. Идентификатор задается в пути.
       required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Bream'
-    TunaCreate:
-      description: Данные для создания тунца. Поля id и typeName игнорируются сервером.
+            $ref: '#/components/schemas/Carp'
+    MackerelCreate:
+      description: Данные для создания скумбрии. Поля id и typeName игнорируются сервером.
       required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Tuna'
-    TunaUpdate:
-      description: Данные для обновления тунца. Идентификатор задается в пути.
+            $ref: '#/components/schemas/Mackerel'
+    MackerelUpdate:
+      description: Данные для обновления скумбрии. Идентификатор задается в пути.
       required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Tuna'
+            $ref: '#/components/schemas/Mackerel'
   responses:
     FishCollectionsResponse:
       description: Списки всех рыб по типам.
@@ -238,30 +208,30 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/FishCollections'
-    BreamCreated:
-      description: Лещ создан.
+    CarpCreated:
+      description: Карп создан.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Bream'
-    BreamResponse:
-      description: Данные о лещe.
+            $ref: '#/components/schemas/Carp'
+    CarpResponse:
+      description: Данные о карпе.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Bream'
-    TunaCreated:
-      description: Тунец создан.
+            $ref: '#/components/schemas/Carp'
+    MackerelCreated:
+      description: Скумбрия создана.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Tuna'
-    TunaResponse:
-      description: Данные о тунце.
+            $ref: '#/components/schemas/Mackerel'
+    MackerelResponse:
+      description: Данные о скумбрии.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Tuna'
+            $ref: '#/components/schemas/Mackerel'
     NotFound:
       description: Объект не найден.
       content:
