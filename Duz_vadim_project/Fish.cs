@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
+using System.Text.Json.Serialization;
 
 namespace Duz_vadim_project;
 
@@ -15,10 +16,11 @@ public partial class Fish : ObservableObject, ICloneable
   /// <summary>
   /// Уникальный идентификатор экземпляра. Значение назначается на сервере.
   /// </summary>
+  [JsonInclude]
   public int Id
   {
     get => _id;
-    internal set => SetProperty(ref _id, value);
+    private set => SetProperty(ref _id, value);
   }
 
   /// <summary>
