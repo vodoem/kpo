@@ -1,4 +1,4 @@
-﻿<Window
+<Window
   x:Class="UI.Views.EditFishWindows.EditMackerelWindow"
   xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -13,66 +13,66 @@
   Icon="/Assets/avalonia-logo.ico"
   WindowStartupLocation="CenterOwner">
 
-  <DockPanel Margin="16">
-    <StackPanel DockPanel.Dock="Top" Spacing="8">
-      <!-- Вес -->
-      <StackPanel>
-        <TextBlock Margin="0,0,0,1" Text="Вес (г)" />
-        <NumericUpDown
-          Increment="100"
-          IsEnabled="{Binding !IsViewMode}"
-          Maximum="100000"
-          Minimum="0"
-          Watermark="Вес"
-          Value="{Binding FishInstance.Weight, Mode=TwoWay}" />
-      </StackPanel>
+  <Grid Margin="16" RowDefinitions="* auto auto">
+    <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+      <StackPanel Spacing="8">
+        <!-- Вес -->
+        <StackPanel>
+          <TextBlock Margin="0,0,0,1" Text="Вес (г)" />
+          <NumericUpDown
+            Increment="100"
+            IsEnabled="{Binding !IsViewMode}"
+            Maximum="100000"
+            Minimum="0"
+            Watermark="Вес"
+            Value="{Binding FishInstance.Weight, Mode=TwoWay}" />
+        </StackPanel>
 
-      <!-- Возраст -->
-      <StackPanel>
-        <TextBlock Margin="0,0,0,1" Text="Возраст (лет)" />
-        <NumericUpDown
-          Increment="1"
-          IsEnabled="{Binding !IsViewMode}"
-          Maximum="100"
-          Minimum="0"
-          Watermark="Возраст"
-          Value="{Binding FishInstance.Age, Mode=TwoWay}" />
-      </StackPanel>
+        <!-- Возраст -->
+        <StackPanel>
+          <TextBlock Margin="0,0,0,1" Text="Возраст (лет)" />
+          <NumericUpDown
+            Increment="1"
+            IsEnabled="{Binding !IsViewMode}"
+            Maximum="100"
+            Minimum="0"
+            Watermark="Возраст"
+            Value="{Binding FishInstance.Age, Mode=TwoWay}" />
+        </StackPanel>
 
-      <!-- Съедобная -->
-      <StackPanel>
-        <TextBlock Margin="0,0,0,1" Text="Съедобная" />
-        <CheckBox
-          IsEnabled="{Binding !IsViewMode}"
-          IsChecked="{Binding FishInstance.IsEdible, Mode=TwoWay}" />
-      </StackPanel>
+        <!-- Съедобная -->
+        <StackPanel>
+          <TextBlock Margin="0,0,0,1" Text="Съедобная" />
+          <CheckBox
+            IsEnabled="{Binding !IsViewMode}"
+            IsChecked="{Binding FishInstance.IsEdible, Mode=TwoWay}" />
+        </StackPanel>
 
-      <!-- Соленость воды -->
-      <StackPanel>
-        <TextBlock Margin="0,0,0,1" Text="Соленость воды (промилле)" />
-        <NumericUpDown
-          Increment="0.1"
-          IsEnabled="{Binding !IsViewMode}"
-          Maximum="1000"
-          Minimum="0"
-          Watermark="Соленость воды"
-          Value="{Binding FishInstance.Salinity, Mode=TwoWay}" />
-      </StackPanel>
+        <!-- Глубина обитания -->
+        <StackPanel>
+          <TextBlock Margin="0,0,0,1" Text="Глубина обитания (м)" />
+          <NumericUpDown
+            Increment="0.1"
+            IsEnabled="{Binding !IsViewMode}"
+            Maximum="1000"
+            Minimum="0"
+            Watermark="Глубина обитания"
+            Value="{Binding FishInstance.HabitatDepth, Mode=TwoWay}" />
+        </StackPanel>
 
-      <!-- Размер жабр -->
-      <StackPanel>
-        <TextBlock Margin="0,0,0,1" Text="Размер жабр" />
-        <NumericUpDown
-          Increment="0.1"
-          IsEnabled="{Binding !IsViewMode}"
-          Maximum="100"
-          Minimum="0"
-          Watermark="Размер жабр"
-          Value="{Binding FishInstance.GillSize, Mode=TwoWay}" />
+        <!-- Тип воды -->
+        <StackPanel>
+          <TextBlock Margin="0,0,0,1" Text="Тип воды" />
+          <TextBox
+            IsEnabled="{Binding !IsViewMode}"
+            Text="{Binding FishInstance.WaterType, Mode=TwoWay}"
+            Watermark="Тип воды" />
+        </StackPanel>
       </StackPanel>
-    </StackPanel>
+    </ScrollViewer>
 
     <TextBlock
+      Grid.Row="1"
       Margin="0,8,0,0"
       Foreground="Red"
       Text="{Binding ErrorMessage}"
@@ -80,9 +80,8 @@
 
     <!-- Кнопки -->
     <StackPanel
+      Grid.Row="2"
       HorizontalAlignment="Center"
-      VerticalAlignment="Bottom"
-      DockPanel.Dock="Bottom"
       Orientation="Horizontal"
       Spacing="8">
       <Button
@@ -96,5 +95,5 @@
         HorizontalContentAlignment="Center"
         Content="Отмена" />
     </StackPanel>
-  </DockPanel>
+  </Grid>
 </Window>
