@@ -45,6 +45,14 @@ paths:
           $ref: '#/components/responses/CarpResponse'
         '404':
           $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Удалить карпа
+      operationId: deleteCarp
+      responses:
+        '200':
+          $ref: '#/components/responses/Deleted'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /Mackerel:
     post:
       summary: Создать новую скумбрию
@@ -73,6 +81,14 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/MackerelResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Удалить скумбрию
+      operationId: deleteMackerel
+      responses:
+        '200':
+          $ref: '#/components/responses/Deleted'
         '404':
           $ref: '#/components/responses/NotFound'
 components:
@@ -234,6 +250,16 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Mackerel'
+    Deleted:
+      description: Объект удалён.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Удалено
     NotFound:
       description: Объект не найден.
       content:

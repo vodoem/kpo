@@ -29,6 +29,7 @@
           Command="{Binding DeleteCommand}"
           Content="Удалить"
           IsEnabled="{Binding CanEditOrDelete}" />
+        <Button Command="{Binding RefreshFromServerCommand}" Content="Обновить с сервера" />
       </StackPanel>
 
       <Button

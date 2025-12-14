@@ -20,7 +20,7 @@ public partial class Fish : ObservableObject, ICloneable
   public int Id
   {
     get => _id;
-    private set => SetProperty(ref _id, value);
+    internal set => SetProperty(ref _id, value);
   }
 
   /// <summary>
