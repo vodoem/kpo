@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using System.ComponentModel.DataAnnotations;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Duz_vadim_project;
 
@@ -10,6 +11,8 @@ public partial class Carp : FreshwaterFish
   /// <summary>
   /// Цвет чешуи
   /// </summary>
+  [Required(ErrorMessage = "Цвет чешуи обязателен")]
+  [StringLength(100, ErrorMessage = "Цвет чешуи не должен превышать 100 символов")]
   [ObservableProperty]
   private string _scaleColor;
 

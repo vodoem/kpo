@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using System.ComponentModel.DataAnnotations;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Duz_vadim_project;
 
@@ -10,6 +11,7 @@ public partial class Mackerel : SaltwaterFish
   /// <summary>
   /// Размер жабр
   /// </summary>
+  [Range(0.1, 500, ErrorMessage = "Размер жабр должен быть от 0.1 до 500")]
   [ObservableProperty]
   private decimal _gillSize;
 

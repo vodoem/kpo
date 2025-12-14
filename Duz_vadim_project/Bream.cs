@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using System.ComponentModel.DataAnnotations;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Duz_vadim_project;
 
@@ -10,6 +11,8 @@ public partial class Bream : FreshwaterFish
   /// <summary>
   /// Форма тела
   /// </summary>
+  [Required(ErrorMessage = "Форма тела обязательна")]
+  [StringLength(100, ErrorMessage = "Форма тела не должна превышать 100 символов")]
   [ObservableProperty]
   private string _bodyShape;
 

@@ -1,4 +1,4 @@
-﻿<Window
+<Window
   x:Class="UI.Views.EditFishWindows.EditBreamWindow"
   xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -13,71 +13,79 @@
   Icon="/Assets/avalonia-logo.ico"
   WindowStartupLocation="CenterOwner">
 
-  <DockPanel Margin="16">
-    <StackPanel DockPanel.Dock="Top" Spacing="8">
-      <!-- Вес -->
-      <StackPanel>
-        <TextBlock Margin="0,0,0,1" Text="Вес (г)" />
-        <NumericUpDown
-          Increment="100"
-          IsEnabled="{CompiledBinding !IsViewMode}"
-          IsReadOnly="{CompiledBinding IsViewMode}"
-          Maximum="100000"
-          Minimum="0"
-          Watermark="Вес"
-          Value="{CompiledBinding FishInstance.Weight, Mode=TwoWay}" />
-      </StackPanel>
+  <Grid Margin="16" RowDefinitions="* auto auto">
+    <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+      <StackPanel Spacing="8">
+        <!-- Вес -->
+        <StackPanel>
+          <TextBlock Margin="0,0,0,1" Text="Вес (г)" />
+          <NumericUpDown
+            Increment="100"
+            IsEnabled="{CompiledBinding !IsViewMode}"
+            IsReadOnly="{CompiledBinding IsViewMode}"
+            Maximum="100000"
+            Minimum="0"
+            Watermark="Вес"
+            Value="{CompiledBinding FishInstance.Weight, Mode=TwoWay}" />
+        </StackPanel>
 
-      <!-- Возраст -->
-      <StackPanel>
-        <TextBlock Margin="0,0,0,1" Text="Возраст (лет)" />
-        <NumericUpDown
-          Increment="1"
-          IsEnabled="{Binding !IsViewMode}"
-          IsReadOnly="{Binding IsViewMode}"
-          Maximum="100"
-          Minimum="0"
-          Watermark="Возраст"
-          Value="{Binding FishInstance.Age, Mode=TwoWay}" />
-      </StackPanel>
+        <!-- Возраст -->
+        <StackPanel>
+          <TextBlock Margin="0,0,0,1" Text="Возраст (лет)" />
+          <NumericUpDown
+            Increment="1"
+            IsEnabled="{Binding !IsViewMode}"
+            IsReadOnly="{Binding IsViewMode}"
+            Maximum="100"
+            Minimum="0"
+            Watermark="Возраст"
+            Value="{Binding FishInstance.Age, Mode=TwoWay}" />
+        </StackPanel>
 
-      <!-- Съедобная -->
-      <StackPanel>
-        <TextBlock Margin="0,0,0,1" Text="Съедобная" />
-        <CheckBox
-          IsEnabled="{Binding !IsViewMode}"
-          IsChecked="{Binding FishInstance.IsEdible, Mode=TwoWay}" />
-      </StackPanel>
+        <!-- Съедобная -->
+        <StackPanel>
+          <TextBlock Margin="0,0,0,1" Text="Съедобная" />
+          <CheckBox
+            IsEnabled="{Binding !IsViewMode}"
+            IsChecked="{Binding FishInstance.IsEdible, Mode=TwoWay}" />
+        </StackPanel>
 
-      <!-- Глубина обитания -->
-      <StackPanel>
-        <TextBlock Margin="0,0,0,1" Text="Глубина обитания (м)" />
-        <NumericUpDown
-          Increment="0.1"
-          IsEnabled="{Binding !IsViewMode}"
-          IsReadOnly="{Binding IsViewMode}"
-          Maximum="1000"
-          Minimum="0"
-          Watermark="Глубина обитания"
-          Value="{Binding FishInstance.HabitatDepth, Mode=TwoWay}" />
-      </StackPanel>
+        <!-- Глубина обитания -->
+        <StackPanel>
+          <TextBlock Margin="0,0,0,1" Text="Глубина обитания (м)" />
+          <NumericUpDown
+            Increment="0.1"
+            IsEnabled="{Binding !IsViewMode}"
+            IsReadOnly="{Binding IsViewMode}"
+            Maximum="1000"
+            Minimum="0"
+            Watermark="Глубина обитания"
+            Value="{Binding FishInstance.HabitatDepth, Mode=TwoWay}" />
+        </StackPanel>
 
-      <!-- Форма тела -->
-      <StackPanel>
-        <TextBlock Margin="0,0,0,1" Text="Форма тела" />
-        <TextBox
-          IsEnabled="{Binding !IsViewMode}"
-          IsReadOnly="{Binding IsViewMode}"
-          Text="{Binding FishInstance.BodyShape, Mode=TwoWay}"
-          Watermark="Форма тела" />
+        <!-- Форма тела -->
+        <StackPanel>
+          <TextBlock Margin="0,0,0,1" Text="Форма тела" />
+          <TextBox
+            IsEnabled="{Binding !IsViewMode}"
+            IsReadOnly="{Binding IsViewMode}"
+            Text="{Binding FishInstance.BodyShape, Mode=TwoWay}"
+            Watermark="Форма тела" />
+        </StackPanel>
       </StackPanel>
-    </StackPanel>
+    </ScrollViewer>
+
+    <TextBlock
+      Grid.Row="1"
+      Margin="0,8,0,0"
+      Foreground="Red"
+      Text="{Binding ErrorMessage}"
+      TextWrapping="Wrap" />
 
     <!-- Кнопки -->
     <StackPanel
+      Grid.Row="2"
       HorizontalAlignment="Center"
-      VerticalAlignment="Bottom"
-      DockPanel.Dock="Bottom"
       Orientation="Horizontal"
       Spacing="8">
       <Button
@@ -91,5 +99,5 @@
         HorizontalContentAlignment="Center"
         Content="Отмена" />
     </StackPanel>
-  </DockPanel>
+  </Grid>
 </Window>

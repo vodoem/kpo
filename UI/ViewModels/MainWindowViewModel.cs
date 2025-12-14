@@ -248,12 +248,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
     var fish = SelectedFactory.CreateFreshwaterFish();
     var viewModel = CreateEditor(fish, false);
-    var result = await ShowEditFishDialog.Handle(viewModel);
-
-    if (result != null)
-    {
-      await PersistNewFishAsync(result);
-    }
+    AttachSaveHandler(viewModel, true);
+    await ShowEditFishDialog.Handle(viewModel);
   }
 
   /// <summary>
@@ -265,12 +261,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
     var fish = SelectedFactory.CreateSaltwaterFish();
     var viewModel = CreateEditor(fish, false);
-    var result = await ShowEditFishDialog.Handle(viewModel);
-
-    if (result != null)
-    {
-      await PersistNewFishAsync(result);
-    }
+    AttachSaveHandler(viewModel, true);
+    await ShowEditFishDialog.Handle(viewModel);
   }
 
   /// <summary>
@@ -297,11 +289,8 @@ public partial class MainWindowViewModel : ViewModelBase
       return;
     }
 
-    var result = await ShowEditFishDialog.Handle(editViewModel);
-    if (result != null)
-    {
-      await UpdateFishAsync(result);
-    }
+    AttachSaveHandler(editViewModel, false);
+    await ShowEditFishDialog.Handle(editViewModel);
   }
 
   /// <summary>
@@ -339,28 +328,32 @@ public partial class MainWindowViewModel : ViewModelBase
   /// Сохраняет новый объект на сервере или локально.
   /// </summary>
   /// <param name="fish">Новая рыба.</param>
-  private async Task PersistNewFishAsync(Fish fish)
+  private async Task<SaveOperationResult> PersistNewFishAsync(Fish fish)
   {
     try
     {
       if (IsServerFish(fish))
       {
-        var created = await CreateOnServerAsync(fish).ConfigureAwait(false);
-        if (created != null)
+        var created = await CreateOnServerAsync(fish);
+        if (created is null)
         {
-          _allFish.Add(created);
-          ApplyFilter(created);
+          return new SaveOperationResult(false, "Сервер не вернул созданный объект.");
         }
+
+        _allFish.Add(created);
+        ApplyFilter(created);
       }
       else
       {
         _allFish.Add(fish);
         ApplyFilter(fish);
       }
+
+      return new SaveOperationResult(true);
     }
     catch (Exception ex)
     {
-      Console.WriteLine($"Ошибка при сохранении рыбы: {ex.Message}");
+      return new SaveOperationResult(false, ex.Message);
     }
   }
 
@@ -368,31 +361,35 @@ public partial class MainWindowViewModel : ViewModelBase
   /// Обновляет существующую рыбу.
   /// </summary>
   /// <param name="updatedFish">Отредактированное значение.</param>
-  private async Task UpdateFishAsync(Fish updatedFish)
+  private async Task<SaveOperationResult> UpdateFishAsync(Fish updatedFish)
   {
     if (SelectedFish is null)
     {
-      return;
+      return new SaveOperationResult(false, "Рыба не выбрана.");
     }
 
     try
     {
       if (IsServerFish(updatedFish))
       {
-        var refreshed = await UpdateOnServerAsync(updatedFish).ConfigureAwait(false);
-        if (refreshed != null)
+        var refreshed = await UpdateOnServerAsync(updatedFish);
+        if (refreshed is null)
         {
-          SelectedFish.CopyFrom(refreshed);
+          return new SaveOperationResult(false, "Объект не найден на сервере.");
         }
+
+        SelectedFish.CopyFrom(refreshed);
       }
       else
       {
         SelectedFish.CopyFrom(updatedFish);
       }
+
+      return new SaveOperationResult(true);
     }
     catch (Exception ex)
     {
-      Console.WriteLine($"Ошибка при обновлении рыбы: {ex.Message}");
+      return new SaveOperationResult(false, ex.Message);
     }
   }
 
@@ -411,7 +408,7 @@ public partial class MainWindowViewModel : ViewModelBase
         return;
       }
 
-      var deleted = await DeleteOnServerAsync(fish).ConfigureAwait(false);
+      var deleted = await DeleteOnServerAsync(fish);
       if (deleted)
       {
         _allFish.Remove(fish);
@@ -433,7 +430,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     try
     {
-      var collections = await _apiClient.GetCollectionsAsync().ConfigureAwait(false);
+      var collections = await _apiClient.GetCollectionsAsync();
       if (collections == null)
       {
         return;
@@ -462,8 +459,8 @@ public partial class MainWindowViewModel : ViewModelBase
   {
     return fish switch
     {
-      Carp carp => await _apiClient.CreateCarpAsync(carp).ConfigureAwait(false),
-      Mackerel mackerel => await _apiClient.CreateMackerelAsync(mackerel).ConfigureAwait(false),
+      Carp carp => await _apiClient.CreateCarpAsync(carp),
+      Mackerel mackerel => await _apiClient.CreateMackerelAsync(mackerel),
       _ => null
     };
   }
@@ -472,8 +469,8 @@ public partial class MainWindowViewModel : ViewModelBase
   {
     return fish switch
     {
-      Carp carp => await _apiClient.UpdateCarpAsync(carp).ConfigureAwait(false),
-      Mackerel mackerel => await _apiClient.UpdateMackerelAsync(mackerel).ConfigureAwait(false),
+      Carp carp => await _apiClient.UpdateCarpAsync(carp),
+      Mackerel mackerel => await _apiClient.UpdateMackerelAsync(mackerel),
       _ => null
     };
   }
@@ -514,7 +511,7 @@ public partial class MainWindowViewModel : ViewModelBase
     {
       generatedFish = await progressController.RunAsync(
         options,
-        async session => await FishGenerator.GenerateFishListAsync(session).ConfigureAwait(false)).ConfigureAwait(false);
+        async session => await FishGenerator.GenerateFishListAsync(session));
     }
     catch (OperationCanceledException)
     {
@@ -573,6 +570,25 @@ public partial class MainWindowViewModel : ViewModelBase
       Tuna tuna => new FishEditor<Tuna>(tuna, parIsViewMode),
       _ => throw new InvalidOperationException("Неизвестный тип рыбы")
     };
+  }
+
+  private void AttachSaveHandler(ViewModelBase editor, bool isNew)
+  {
+    switch (editor)
+    {
+      case FishEditor<Bream> breamEditor:
+        breamEditor.SaveHandler = fish => isNew ? PersistNewFishAsync(fish) : UpdateFishAsync(fish);
+        break;
+      case FishEditor<Carp> carpEditor:
+        carpEditor.SaveHandler = fish => isNew ? PersistNewFishAsync(fish) : UpdateFishAsync(fish);
+        break;
+      case FishEditor<Mackerel> mackerelEditor:
+        mackerelEditor.SaveHandler = fish => isNew ? PersistNewFishAsync(fish) : UpdateFishAsync(fish);
+        break;
+      case FishEditor<Tuna> tunaEditor:
+        tunaEditor.SaveHandler = fish => isNew ? PersistNewFishAsync(fish) : UpdateFishAsync(fish);
+        break;
+    }
   }
 
   /// <summary>

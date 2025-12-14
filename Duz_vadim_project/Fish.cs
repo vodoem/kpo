@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using CommunityToolkit.Mvvm.ComponentModel;
 using System.Text.Json.Serialization;
 
@@ -6,7 +7,7 @@ namespace Duz_vadim_project;
 /// <summary>
 /// Все виды рыб
 /// </summary>
-public partial class Fish : ObservableObject, ICloneable
+public partial class Fish : ObservableValidator, ICloneable
 {
   /// <summary>
   /// Бэкинг-филд для идентификатора.
@@ -17,6 +18,7 @@ public partial class Fish : ObservableObject, ICloneable
   /// Уникальный идентификатор экземпляра. Значение назначается на сервере.
   /// </summary>
   [JsonInclude]
+  [Range(0, int.MaxValue, ErrorMessage = "Идентификатор должен быть неотрицательным")]
   public int Id
   {
     get => _id;
@@ -26,18 +28,21 @@ public partial class Fish : ObservableObject, ICloneable
   /// <summary>
   /// Вес рыбы в граммах
   /// </summary>
+  [Range(1, 1_000_000, ErrorMessage = "Вес должен быть в диапазоне от 1 до 1 000 000 грамм")]
   [ObservableProperty]
   private decimal _weight;
 
   /// <summary>
   /// Возраст рыбы в годах
   /// </summary>
+  [Range(0, 200, ErrorMessage = "Возраст должен быть в диапазоне от 0 до 200 лет")]
   [ObservableProperty]
   private int _age;
 
   /// <summary>
   /// Является ли рыба съедобной
   /// </summary>
+  [Required(ErrorMessage = "Необходимо указать съедобность рыбы")]
   [ObservableProperty]
   private bool _isEdible;
 

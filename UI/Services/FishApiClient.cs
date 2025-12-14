@@ -25,6 +25,11 @@ public class FishApiClient
   };
 
   /// <summary>
+  /// Выполнять ли проверку входящих ответов по схеме OpenAPI.
+  /// </summary>
+  public bool ValidateResponses { get; set; } = true;
+
+  /// <summary>
   /// Создаёт новый экземпляр клиента.
   /// </summary>
   /// <param name="httpClient">HTTP клиент.</param>
@@ -166,7 +171,10 @@ public class FishApiClient
     var response = await _httpClient.SendAsync(request, cancellationToken);
     var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
 
-    EnsureValid(_validator.ValidateResponse(operationId, method.Method, validationPath, responseBody, ((int)response.StatusCode).ToString()), operationId, validationPath, isResponse: true);
+    if (ValidateResponses)
+    {
+      EnsureValid(_validator.ValidateResponse(operationId, method.Method, validationPath, responseBody, ((int)response.StatusCode).ToString()), operationId, validationPath, isResponse: true);
+    }
 
     if (!allowedStatuses.Contains(response.StatusCode))
     {

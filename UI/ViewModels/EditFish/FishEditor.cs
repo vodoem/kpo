@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Reactive;
+using System.Reactive.Linq;
+using System.Threading.Tasks;
 using Duz_vadim_project;
 using ReactiveUI;
 
@@ -13,6 +15,12 @@ public partial class FishEditor<TFish> : ViewModelBase where TFish : Fish, IClon
 {
     private readonly TFish _fishInstance;
     private readonly bool _isViewMode;
+    private string? _errorMessage;
+
+    /// <summary>
+    /// Делегат для сохранения изменений.
+    /// </summary>
+    public Func<TFish, Task<SaveOperationResult>>? SaveHandler { get; set; }
 
     /// <summary>
     /// Текущий экземпляр рыбы.
@@ -32,7 +40,16 @@ public partial class FishEditor<TFish> : ViewModelBase where TFish : Fish, IClon
     /// <summary>
     /// Команда сохранения изменений.
     /// </summary>
-    public ReactiveCommand<Unit, TFish> SaveChanges { get; }
+    public ReactiveCommand<Unit, TFish?> SaveChanges { get; }
+
+    /// <summary>
+    /// Текст ошибки, который следует показать пользователю.
+    /// </summary>
+    public string? ErrorMessage
+    {
+        get => _errorMessage;
+        private set => this.RaiseAndSetIfChanged(ref _errorMessage, value);
+    }
 
     /// <summary>
     /// Создаёт форму без предварительных данных.
@@ -51,6 +68,32 @@ public partial class FishEditor<TFish> : ViewModelBase where TFish : Fish, IClon
         _fishInstance = instance?.Clone() as TFish ?? Activator.CreateInstance<TFish>();
         _isViewMode = viewMode;
 
-        SaveChanges = ReactiveCommand.Create(() => _fishInstance);
+        SaveChanges = ReactiveCommand.CreateFromTask(SaveAsync);
+    }
+
+    private async Task<TFish?> SaveAsync()
+    {
+        ErrorMessage = null;
+
+        if (_isViewMode || SaveHandler is null)
+        {
+            return _fishInstance;
+        }
+
+        var result = await SaveHandler(_fishInstance);
+        if (result.Success)
+        {
+            return _fishInstance;
+        }
+
+        ErrorMessage = result.ErrorMessage ?? "Не удалось сохранить изменения.";
+        return null;
     }
 }
+
+/// <summary>
+/// Результат сохранения из формы редактирования.
+/// </summary>
+/// <param name="Success">Признак успеха.</param>
+/// <param name="ErrorMessage">Описание ошибки.</param>
+public record SaveOperationResult(bool Success, string? ErrorMessage = null);

@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using System.ComponentModel.DataAnnotations;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Duz_vadim_project;
 
@@ -10,6 +11,7 @@ public partial class SaltwaterFish : Fish
   /// <summary>
   /// Соленость воды в промилле
   /// </summary>
+  [Range(0, 120, ErrorMessage = "Соленость должна быть от 0 до 120‰")]
   [ObservableProperty]
   private decimal _salinity;
 
