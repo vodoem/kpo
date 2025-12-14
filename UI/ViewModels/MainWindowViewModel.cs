@@ -429,9 +429,8 @@ public partial class MainWindowViewModel : ViewModelBase
   /// </summary>
   private async Task RefreshFromServerAsync()
   {
-    var previousKey = SelectedFish != null
-      ? (SelectedFish.Id, SelectedFish.TypeName)
-      : ((int Id, string TypeName)?)null;
+    var previousSelection = SelectedFish;
+
     try
     {
       var collections = await _apiClient.GetCollectionsAsync().ConfigureAwait(false);
@@ -443,29 +442,21 @@ public partial class MainWindowViewModel : ViewModelBase
       var newData = new List<Fish>();
       newData.AddRange(collections.Carps);
       newData.AddRange(collections.Mackerels);
-
-      _allFish.Clear();
-      _allFish.AddRange(newData);
-
-      ApplyFilter();
-
-      if (previousKey != null)
+      
+      await Dispatcher.UIThread.InvokeAsync(() =>
       {
-        var restoredSelection = _filteredFish.FirstOrDefault(parFish => parFish.Id == previousKey.Value.Id
-                                                                        && parFish.TypeName == previousKey.Value.TypeName);
-        if (restoredSelection != null)
-        {
-          SelectedFish = null;
-          SelectedFish = restoredSelection;
-          _ = FocusFishRequest.Handle(restoredSelection);
-        }
-      }
+        _allFish.Clear();
+        _allFish.AddRange(newData);
+        
+        ApplyFilter(previousSelection);
+      });
     }
     catch (Exception ex)
     {
       Console.WriteLine($"Не удалось загрузить данные с сервера: {ex.Message}");
     }
   }
+
 
   private async Task<Fish?> CreateOnServerAsync(Fish fish)
   {
