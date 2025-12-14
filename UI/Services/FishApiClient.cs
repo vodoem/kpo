@@ -35,7 +35,7 @@ public class FishApiClient
   /// </summary>
   public async Task<FishCollections?> GetCollectionsAsync(CancellationToken cancellationToken = default)
   {
-    var (response, _) = await SendAsync<FishCollections>("getFishLists", HttpMethod.Get, "/list", null, cancellationToken, HttpStatusCode.OK);
+    var (response, _) = await SendAsync<FishCollections>("getFishLists", HttpMethod.Get, "/list", null, cancellationToken, expectedStatuses: new[] { HttpStatusCode.OK });
     return response;
   }
 
@@ -44,7 +44,7 @@ public class FishApiClient
   /// </summary>
   public async Task<Carp?> CreateCarpAsync(Carp carp, CancellationToken cancellationToken = default)
   {
-    var (response, _) = await SendAsync<Carp>("createCarp", HttpMethod.Post, "/Carp", carp, cancellationToken, HttpStatusCode.Created);
+    var (response, _) = await SendAsync<Carp>("createCarp", HttpMethod.Post, "/Carp", carp, cancellationToken, expectedStatuses: new[] { HttpStatusCode.Created });
     return response;
   }
 
@@ -53,7 +53,7 @@ public class FishApiClient
   /// </summary>
   public async Task<Mackerel?> CreateMackerelAsync(Mackerel mackerel, CancellationToken cancellationToken = default)
   {
-    var (response, _) = await SendAsync<Mackerel>("createMackerel", HttpMethod.Post, "/Mackerel", mackerel, cancellationToken, HttpStatusCode.Created);
+    var (response, _) = await SendAsync<Mackerel>("createMackerel", HttpMethod.Post, "/Mackerel", mackerel, cancellationToken, expectedStatuses: new[] { HttpStatusCode.Created });
     return response;
   }
 
@@ -62,7 +62,18 @@ public class FishApiClient
   /// </summary>
   public async Task<Carp?> UpdateCarpAsync(Carp carp, CancellationToken cancellationToken = default)
   {
-    var (response, status) = await SendAsync<Carp>("updateCarp", HttpMethod.Put, $"/Carp/{carp.Id}", carp, cancellationToken, HttpStatusCode.OK, HttpStatusCode.NotFound);
+    var (response, status) = await SendAsync<Carp>(
+      "updateCarp",
+      HttpMethod.Put,
+      $"/Carp/{carp.Id}",
+      carp,
+      cancellationToken,
+      expectedStatuses: new[]
+      {
+        HttpStatusCode.OK,
+        HttpStatusCode.NotFound
+      },
+      "/Carp/{id}");
     return status == HttpStatusCode.OK ? response : null;
   }
 
@@ -71,7 +82,18 @@ public class FishApiClient
   /// </summary>
   public async Task<Mackerel?> UpdateMackerelAsync(Mackerel mackerel, CancellationToken cancellationToken = default)
   {
-    var (response, status) = await SendAsync<Mackerel>("updateMackerel", HttpMethod.Put, $"/Mackerel/{mackerel.Id}", mackerel, cancellationToken, HttpStatusCode.OK, HttpStatusCode.NotFound);
+    var (response, status) = await SendAsync<Mackerel>(
+      "updateMackerel",
+      HttpMethod.Put,
+      $"/Mackerel/{mackerel.Id}",
+      mackerel,
+      cancellationToken,
+      expectedStatuses: new[]
+      {
+        HttpStatusCode.OK,
+        HttpStatusCode.NotFound
+      },
+      "/Mackerel/{id}");
     return status == HttpStatusCode.OK ? response : null;
   }
 
@@ -80,7 +102,7 @@ public class FishApiClient
   /// </summary>
   public Task<bool> DeleteCarpAsync(Carp carp, CancellationToken cancellationToken = default)
   {
-    return DeleteAsync("deleteCarp", $"/Carp/{carp.Id}", cancellationToken);
+    return DeleteAsync("deleteCarp", $"/Carp/{carp.Id}", cancellationToken, "/Carp/{id}");
   }
 
   /// <summary>
@@ -88,12 +110,23 @@ public class FishApiClient
   /// </summary>
   public Task<bool> DeleteMackerelAsync(Mackerel mackerel, CancellationToken cancellationToken = default)
   {
-    return DeleteAsync("deleteMackerel", $"/Mackerel/{mackerel.Id}", cancellationToken);
+    return DeleteAsync("deleteMackerel", $"/Mackerel/{mackerel.Id}", cancellationToken, "/Mackerel/{id}");
   }
 
-  private async Task<bool> DeleteAsync(string operationId, string path, CancellationToken cancellationToken)
+  private async Task<bool> DeleteAsync(string operationId, string path, CancellationToken cancellationToken, string? templatePath = null)
   {
-    var (_, status) = await SendAsync<ServerMessage>(operationId, HttpMethod.Delete, path, null, cancellationToken, HttpStatusCode.OK, HttpStatusCode.NotFound);
+    var (_, status) = await SendAsync<ServerMessage>(
+      operationId,
+      HttpMethod.Delete,
+      path,
+      null,
+      cancellationToken,
+      expectedStatuses: new[]
+      {
+        HttpStatusCode.OK,
+        HttpStatusCode.NotFound
+      },
+      templatePath);
     return status == HttpStatusCode.OK;
   }
 
@@ -103,15 +136,17 @@ public class FishApiClient
     string path,
     object? payload,
     CancellationToken cancellationToken,
-    params HttpStatusCode[] expectedStatuses)
+    HttpStatusCode[]? expectedStatuses = null,
+    string? templatePath = null)
   {
-    var allowedStatuses = expectedStatuses.Length == 0 ? new[] { HttpStatusCode.OK } : expectedStatuses;
+    var allowedStatuses = expectedStatuses is { Length: > 0 } ? expectedStatuses : new[] { HttpStatusCode.OK };
+    var validationPath = templatePath ?? path;
 
     string? serializedPayload = null;
     if (payload != null)
     {
       serializedPayload = JsonSerializer.Serialize(payload, _serializerOptions);
-      EnsureValid(_validator.ValidateRequest(operationId, method.Method, path, serializedPayload), operationId, path, isResponse: false);
+      EnsureValid(_validator.ValidateRequest(operationId, method.Method, validationPath, serializedPayload), operationId, validationPath, isResponse: false);
     }
 
     using var request = new HttpRequestMessage(method, path);
@@ -126,7 +161,7 @@ public class FishApiClient
     var response = await _httpClient.SendAsync(request, cancellationToken);
     var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
 
-    EnsureValid(_validator.ValidateResponse(operationId, method.Method, path, responseBody, ((int)response.StatusCode).ToString()), operationId, path, isResponse: true);
+    EnsureValid(_validator.ValidateResponse(operationId, method.Method, validationPath, responseBody, ((int)response.StatusCode).ToString()), operationId, validationPath, isResponse: true);
 
     if (!allowedStatuses.Contains(response.StatusCode))
     {
