@@ -11,6 +11,7 @@ public class FishRepository
   private readonly SemaphoreSlim _sync = new(1, 1);
   private FishCollections _state = new();
   private int _nextId = 1;
+  private DateTime? _lastLoadedWriteTimeUtc;
 
   /// <summary>
   /// Создаёт новый экземпляр хранилища.
@@ -30,6 +31,7 @@ public class FishRepository
     await _sync.WaitAsync();
     try
     {
+      ReloadStateIfChanged();
       return CloneState(_state);
     }
     finally
@@ -46,6 +48,7 @@ public class FishRepository
     await _sync.WaitAsync();
     try
     {
+      ReloadStateIfChanged();
       return _state.Carps.FirstOrDefault(fish => fish.Id == id)?.Clone() as Carp;
     }
     finally
@@ -62,6 +65,7 @@ public class FishRepository
     await _sync.WaitAsync();
     try
     {
+      ReloadStateIfChanged();
       return _state.Mackerels.FirstOrDefault(fish => fish.Id == id)?.Clone() as Mackerel;
     }
     finally
@@ -80,6 +84,7 @@ public class FishRepository
     await _sync.WaitAsync();
     try
     {
+      ReloadStateIfChanged();
       stored.Id = _nextId++;
       _state.Carps.Add(stored);
       await SaveAsync();
@@ -101,6 +106,7 @@ public class FishRepository
     await _sync.WaitAsync();
     try
     {
+      ReloadStateIfChanged();
       stored.Id = _nextId++;
       _state.Mackerels.Add(stored);
       await SaveAsync();
@@ -123,6 +129,7 @@ public class FishRepository
     await _sync.WaitAsync();
     try
     {
+      ReloadStateIfChanged();
       var existing = _state.Carps.FirstOrDefault(fish => fish.Id == id);
       if (existing is null)
       {
@@ -150,6 +157,7 @@ public class FishRepository
     await _sync.WaitAsync();
     try
     {
+      ReloadStateIfChanged();
       var existing = _state.Mackerels.FirstOrDefault(fish => fish.Id == id);
       if (existing is null)
       {
@@ -174,6 +182,7 @@ public class FishRepository
     await _sync.WaitAsync();
     try
     {
+      ReloadStateIfChanged();
       var removed = _state.Carps.RemoveAll(fish => fish.Id == id) > 0;
       if (removed)
       {
@@ -196,6 +205,7 @@ public class FishRepository
     await _sync.WaitAsync();
     try
     {
+      ReloadStateIfChanged();
       var removed = _state.Mackerels.RemoveAll(fish => fish.Id == id) > 0;
       if (removed)
       {
@@ -222,6 +232,7 @@ public class FishRepository
     var loaded = System.Text.Json.JsonSerializer.Deserialize<FishCollections>(json);
     _state = loaded ?? new FishCollections();
     _nextId = _state.Carps.Cast<Fish>().Concat(_state.Mackerels).Select(fish => fish.Id).DefaultIfEmpty(0).Max() + 1;
+    _lastLoadedWriteTimeUtc = File.GetLastWriteTimeUtc(_storagePath);
   }
 
   private async Task SaveAsync()
@@ -237,6 +248,21 @@ public class FishRepository
       WriteIndented = true
     });
     await File.WriteAllTextAsync(_storagePath, json);
+    _lastLoadedWriteTimeUtc = File.GetLastWriteTimeUtc(_storagePath);
+  }
+
+  private void ReloadStateIfChanged()
+  {
+    if (!File.Exists(_storagePath))
+    {
+      return;
+    }
+
+    var lastWriteTime = File.GetLastWriteTimeUtc(_storagePath);
+    if (_lastLoadedWriteTimeUtc == null || lastWriteTime > _lastLoadedWriteTimeUtc)
+    {
+      LoadState();
+    }
   }
 
   private static FishCollections CloneState(FishCollections source) => new()
