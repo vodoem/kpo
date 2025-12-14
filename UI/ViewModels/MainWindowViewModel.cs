@@ -334,7 +334,7 @@ public partial class MainWindowViewModel : ViewModelBase
     {
       if (IsServerFish(fish))
       {
-        var created = await CreateOnServerAsync(fish).ConfigureAwait(false);
+        var created = await CreateOnServerAsync(fish);
         if (created is null)
         {
           return new SaveOperationResult(false, "Сервер не вернул созданный объект.");
@@ -372,7 +372,7 @@ public partial class MainWindowViewModel : ViewModelBase
     {
       if (IsServerFish(updatedFish))
       {
-        var refreshed = await UpdateOnServerAsync(updatedFish).ConfigureAwait(false);
+        var refreshed = await UpdateOnServerAsync(updatedFish);
         if (refreshed is null)
         {
           return new SaveOperationResult(false, "Объект не найден на сервере.");
@@ -408,7 +408,7 @@ public partial class MainWindowViewModel : ViewModelBase
         return;
       }
 
-      var deleted = await DeleteOnServerAsync(fish).ConfigureAwait(false);
+      var deleted = await DeleteOnServerAsync(fish);
       if (deleted)
       {
         _allFish.Remove(fish);
@@ -430,7 +430,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     try
     {
-      var collections = await _apiClient.GetCollectionsAsync().ConfigureAwait(false);
+      var collections = await _apiClient.GetCollectionsAsync();
       if (collections == null)
       {
         return;
@@ -459,8 +459,8 @@ public partial class MainWindowViewModel : ViewModelBase
   {
     return fish switch
     {
-      Carp carp => await _apiClient.CreateCarpAsync(carp).ConfigureAwait(false),
-      Mackerel mackerel => await _apiClient.CreateMackerelAsync(mackerel).ConfigureAwait(false),
+      Carp carp => await _apiClient.CreateCarpAsync(carp),
+      Mackerel mackerel => await _apiClient.CreateMackerelAsync(mackerel),
       _ => null
     };
   }
@@ -469,8 +469,8 @@ public partial class MainWindowViewModel : ViewModelBase
   {
     return fish switch
     {
-      Carp carp => await _apiClient.UpdateCarpAsync(carp).ConfigureAwait(false),
-      Mackerel mackerel => await _apiClient.UpdateMackerelAsync(mackerel).ConfigureAwait(false),
+      Carp carp => await _apiClient.UpdateCarpAsync(carp),
+      Mackerel mackerel => await _apiClient.UpdateMackerelAsync(mackerel),
       _ => null
     };
   }
@@ -511,7 +511,7 @@ public partial class MainWindowViewModel : ViewModelBase
     {
       generatedFish = await progressController.RunAsync(
         options,
-        async session => await FishGenerator.GenerateFishListAsync(session).ConfigureAwait(false)).ConfigureAwait(false);
+        async session => await FishGenerator.GenerateFishListAsync(session));
     }
     catch (OperationCanceledException)
     {
