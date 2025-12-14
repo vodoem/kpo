@@ -5,6 +5,7 @@ using Avalonia.ReactiveUI;
 using Duz_vadim_project;
 using ReactiveUI;
 using UI.ViewModels.EditFish;
+using System.Reactive.Linq;
 
 namespace UI.Views.EditFishWindows;
 
@@ -23,7 +24,9 @@ public partial class EditCarpWindow : ReactiveWindow<FishEditor<Carp>>
         // Подписываемся на команду сохранения.
         this.WhenActivated(disposables =>
         {
-            disposables(ViewModel!.SaveChanges.Subscribe(Close));
+            disposables(ViewModel!.SaveChanges
+                .Where(result => result is not null)
+                .Subscribe(Close));
         });
 
         // Обрабатываем нажатие кнопки «Отмена».

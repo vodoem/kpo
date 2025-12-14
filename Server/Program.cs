@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using Duz_vadim_project;
 using Server;
 
@@ -12,6 +14,11 @@ app.MapGet("/list", async (FishRepository repository) => Results.Ok(await reposi
 
 app.MapPost("/Carp", async (Carp carp, FishRepository repository) =>
   {
+    if (!TryValidateFish(carp, out var validationErrors))
+    {
+      return ValidationProblem(validationErrors);
+    }
+
     var created = await repository.AddCarpAsync(carp);
     return Results.Created($"/Carp/{created.Id}", created);
   })
@@ -28,6 +35,12 @@ app.MapGet("/Carp/{id:int}", async (int id, FishRepository repository) =>
 
 app.MapPut("/Carp/{id:int}", async (int id, Carp carp, FishRepository repository) =>
   {
+    carp.Id = id;
+    if (!TryValidateFish(carp, out var validationErrors))
+    {
+      return ValidationProblem(validationErrors);
+    }
+
     var updated = await repository.UpdateCarpAsync(id, carp);
     return updated is null
       ? Results.NotFound(new { message = "Объект не найден" })
@@ -46,6 +59,11 @@ app.MapDelete("/Carp/{id:int}", async (int id, FishRepository repository) =>
 
 app.MapPost("/Mackerel", async (Mackerel mackerel, FishRepository repository) =>
   {
+    if (!TryValidateFish(mackerel, out var validationErrors))
+    {
+      return ValidationProblem(validationErrors);
+    }
+
     var created = await repository.AddMackerelAsync(mackerel);
     return Results.Created($"/Mackerel/{created.Id}", created);
   })
@@ -62,6 +80,12 @@ app.MapGet("/Mackerel/{id:int}", async (int id, FishRepository repository) =>
 
 app.MapPut("/Mackerel/{id:int}", async (int id, Mackerel mackerel, FishRepository repository) =>
   {
+    mackerel.Id = id;
+    if (!TryValidateFish(mackerel, out var validationErrors))
+    {
+      return ValidationProblem(validationErrors);
+    }
+
     var updated = await repository.UpdateMackerelAsync(id, mackerel);
     return updated is null
       ? Results.NotFound(new { message = "Объект не найден" })
@@ -79,3 +103,20 @@ app.MapDelete("/Mackerel/{id:int}", async (int id, FishRepository repository) =>
   .WithName("deleteMackerel");
 
 app.Run();
+
+static bool TryValidateFish(Fish fish, out List<ValidationResult> validationErrors)
+{
+  var validationContext = new ValidationContext(fish);
+  validationErrors = new List<ValidationResult>();
+  return Validator.TryValidateObject(fish, validationContext, validationErrors, true);
+}
+
+static IResult ValidationProblem(IEnumerable<ValidationResult> validationErrors)
+{
+  var messages = validationErrors.Select(result => result.ErrorMessage ?? "Ошибка валидации");
+  return Results.BadRequest(new
+  {
+    message = "Данные не прошли валидацию",
+    errors = messages
+  });
+}

@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using System.ComponentModel.DataAnnotations;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Duz_vadim_project;
 
@@ -10,6 +11,7 @@ public partial class FreshwaterFish : Fish
   /// <summary>
   /// Глубина обитания в метрах
   /// </summary>
+  [Range(0, 1000, ErrorMessage = "Глубина обитания должна быть от 0 до 1000 метров")]
   [ObservableProperty]
   private decimal _habitatDepth;
 

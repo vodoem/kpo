@@ -71,6 +71,11 @@ public partial class MainWindowViewModel : ViewModelBase
   private readonly FishApiClient _apiClient;
 
   /// <summary>
+  /// Разрешить отправку запросов, нарушающих схему OpenAPI, для проверки серверной валидации.
+  /// </summary>
+  private bool _allowInvalidRequests;
+
+  /// <summary>
   /// Выбранная фабрика для создания объектов рыб.
   /// </summary>
   private IFishFactory? _selectedFactory;
@@ -212,6 +217,19 @@ public partial class MainWindowViewModel : ViewModelBase
   }
 
   /// <summary>
+  /// Переключатель, позволяющий отправлять невалидные запросы для проверки серверной валидации.
+  /// </summary>
+  public bool AllowInvalidRequests
+  {
+    get => _allowInvalidRequests;
+    set
+    {
+      this.RaiseAndSetIfChanged(ref _allowInvalidRequests, value);
+      _apiClient.ValidateRequests = !value;
+    }
+  }
+
+  /// <summary>
   /// Конструктор по умолчанию.
   /// </summary>
   public MainWindowViewModel()
@@ -219,6 +237,8 @@ public partial class MainWindowViewModel : ViewModelBase
     var schemaPath = Path.Combine(AppContext.BaseDirectory, "openapi.yaml");
     var httpClient = new HttpClient { BaseAddress = new Uri("http://localhost:5000") };
     _apiClient = new FishApiClient(httpClient, schemaPath);
+    _allowInvalidRequests = false;
+    _apiClient.ValidateRequests = true;
 
     ShowEditFishDialog = new Interaction<ViewModelBase, Fish?>();
     FocusFishRequest = new Interaction<Fish, Unit>();
@@ -248,12 +268,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
     var fish = SelectedFactory.CreateFreshwaterFish();
     var viewModel = CreateEditor(fish, false);
-    var result = await ShowEditFishDialog.Handle(viewModel);
-
-    if (result != null)
-    {
-      await PersistNewFishAsync(result);
-    }
+    AttachSaveHandler(viewModel, true);
+    await ShowEditFishDialog.Handle(viewModel);
   }
 
   /// <summary>
@@ -265,12 +281,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
     var fish = SelectedFactory.CreateSaltwaterFish();
     var viewModel = CreateEditor(fish, false);
-    var result = await ShowEditFishDialog.Handle(viewModel);
-
-    if (result != null)
-    {
-      await PersistNewFishAsync(result);
-    }
+    AttachSaveHandler(viewModel, true);
+    await ShowEditFishDialog.Handle(viewModel);
   }
 
   /// <summary>
@@ -297,11 +309,8 @@ public partial class MainWindowViewModel : ViewModelBase
       return;
     }
 
-    var result = await ShowEditFishDialog.Handle(editViewModel);
-    if (result != null)
-    {
-      await UpdateFishAsync(result);
-    }
+    AttachSaveHandler(editViewModel, false);
+    await ShowEditFishDialog.Handle(editViewModel);
   }
 
   /// <summary>
@@ -339,28 +348,32 @@ public partial class MainWindowViewModel : ViewModelBase
   /// Сохраняет новый объект на сервере или локально.
   /// </summary>
   /// <param name="fish">Новая рыба.</param>
-  private async Task PersistNewFishAsync(Fish fish)
+  private async Task<SaveOperationResult> PersistNewFishAsync(Fish fish)
   {
     try
     {
       if (IsServerFish(fish))
       {
         var created = await CreateOnServerAsync(fish).ConfigureAwait(false);
-        if (created != null)
+        if (created is null)
         {
-          _allFish.Add(created);
-          ApplyFilter(created);
+          return new SaveOperationResult(false, "Сервер не вернул созданный объект.");
         }
+
+        _allFish.Add(created);
+        ApplyFilter(created);
       }
       else
       {
         _allFish.Add(fish);
         ApplyFilter(fish);
       }
+
+      return new SaveOperationResult(true);
     }
     catch (Exception ex)
     {
-      Console.WriteLine($"Ошибка при сохранении рыбы: {ex.Message}");
+      return new SaveOperationResult(false, ex.Message);
     }
   }
 
@@ -368,11 +381,11 @@ public partial class MainWindowViewModel : ViewModelBase
   /// Обновляет существующую рыбу.
   /// </summary>
   /// <param name="updatedFish">Отредактированное значение.</param>
-  private async Task UpdateFishAsync(Fish updatedFish)
+  private async Task<SaveOperationResult> UpdateFishAsync(Fish updatedFish)
   {
     if (SelectedFish is null)
     {
-      return;
+      return new SaveOperationResult(false, "Рыба не выбрана.");
     }
 
     try
@@ -380,19 +393,23 @@ public partial class MainWindowViewModel : ViewModelBase
       if (IsServerFish(updatedFish))
       {
         var refreshed = await UpdateOnServerAsync(updatedFish).ConfigureAwait(false);
-        if (refreshed != null)
+        if (refreshed is null)
         {
-          SelectedFish.CopyFrom(refreshed);
+          return new SaveOperationResult(false, "Объект не найден на сервере.");
         }
+
+        SelectedFish.CopyFrom(refreshed);
       }
       else
       {
         SelectedFish.CopyFrom(updatedFish);
       }
+
+      return new SaveOperationResult(true);
     }
     catch (Exception ex)
     {
-      Console.WriteLine($"Ошибка при обновлении рыбы: {ex.Message}");
+      return new SaveOperationResult(false, ex.Message);
     }
   }
 
@@ -573,6 +590,25 @@ public partial class MainWindowViewModel : ViewModelBase
       Tuna tuna => new FishEditor<Tuna>(tuna, parIsViewMode),
       _ => throw new InvalidOperationException("Неизвестный тип рыбы")
     };
+  }
+
+  private void AttachSaveHandler(ViewModelBase editor, bool isNew)
+  {
+    switch (editor)
+    {
+      case FishEditor<Bream> breamEditor:
+        breamEditor.SaveHandler = fish => isNew ? PersistNewFishAsync(fish) : UpdateFishAsync(fish);
+        break;
+      case FishEditor<Carp> carpEditor:
+        carpEditor.SaveHandler = fish => isNew ? PersistNewFishAsync(fish) : UpdateFishAsync(fish);
+        break;
+      case FishEditor<Mackerel> mackerelEditor:
+        mackerelEditor.SaveHandler = fish => isNew ? PersistNewFishAsync(fish) : UpdateFishAsync(fish);
+        break;
+      case FishEditor<Tuna> tunaEditor:
+        tunaEditor.SaveHandler = fish => isNew ? PersistNewFishAsync(fish) : UpdateFishAsync(fish);
+        break;
+    }
   }
 
   /// <summary>

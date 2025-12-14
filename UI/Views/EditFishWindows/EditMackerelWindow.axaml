@@ -72,6 +72,12 @@
       </StackPanel>
     </StackPanel>
 
+    <TextBlock
+      Margin="0,8,0,0"
+      Foreground="Red"
+      Text="{Binding ErrorMessage}"
+      TextWrapping="Wrap" />
+
     <!-- Кнопки -->
     <StackPanel
       HorizontalAlignment="Center"

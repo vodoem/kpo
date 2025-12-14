@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using System.ComponentModel.DataAnnotations;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Duz_vadim_project;
 
@@ -10,6 +11,7 @@ public partial class Tuna : SaltwaterFish
   /// <summary>
   /// Скорость плавания
   /// </summary>
+  [Range(0, 120, ErrorMessage = "Скорость плавания должна быть от 0 до 120 м/с")]
   [ObservableProperty]
   private decimal _swimmingSpeed;
 
