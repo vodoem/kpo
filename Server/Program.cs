@@ -6,6 +6,7 @@ using System.Text.Json;
 using Duz_vadim_project;
 using OpenApiValidator;
 using Server;
+using ValidationResult = System.ComponentModel.DataAnnotations.ValidationResult;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -192,11 +193,13 @@ static IResult ValidateResponse<T>(OpenApiSchemaValidator validator, JsonSeriali
   var validation = validator.ValidateResponse(operationId, method.Method, path, json, ((int)statusCode).ToString());
   return validation.IsValid
     ? onSuccess()
-    : Results.StatusCode(StatusCodes.Status500InternalServerError, new
+    : Results.Json(
+    new
     {
       message = "Ответ не соответствует схеме OpenAPI",
       errors = new[] { validation.ErrorMessage ?? "Ошибка валидации OpenAPI" }
-    });
+    },
+    statusCode: StatusCodes.Status500InternalServerError);
 }
 
 static IResult ValidationProblem(IEnumerable<string> validationErrors)

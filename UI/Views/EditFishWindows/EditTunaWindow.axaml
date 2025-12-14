@@ -48,25 +48,28 @@
             IsChecked="{Binding FishInstance.IsEdible, Mode=TwoWay}" />
         </StackPanel>
 
-        <!-- Глубина обитания -->
+        <!-- Соленость воды -->
         <StackPanel>
-          <TextBlock Margin="0,0,0,1" Text="Глубина обитания (м)" />
+          <TextBlock Margin="0,0,0,1" Text="Соленость воды (промилле)" />
           <NumericUpDown
             Increment="0.1"
             IsEnabled="{Binding !IsViewMode}"
             Maximum="1000"
             Minimum="0"
-            Watermark="Глубина обитания"
-            Value="{Binding FishInstance.HabitatDepth, Mode=TwoWay}" />
+            Watermark="Соленость воды"
+            Value="{Binding FishInstance.Salinity, Mode=TwoWay}" />
         </StackPanel>
-
-        <!-- Тип воды -->
+        
+        <!-- Скорость плавания -->
         <StackPanel>
-          <TextBlock Margin="0,0,0,1" Text="Тип воды" />
-          <TextBox
+          <TextBlock Margin="0,0,0,1" Text="Скорость плавания" />
+          <NumericUpDown
+            Increment="0.1"
             IsEnabled="{Binding !IsViewMode}"
-            Text="{Binding FishInstance.WaterType, Mode=TwoWay}"
-            Watermark="Тип воды" />
+            Maximum="100"
+            Minimum="0"
+            Watermark="Скорость плавания"
+            Value="{Binding FishInstance.SwimmingSpeed, Mode=TwoWay}" />
         </StackPanel>
       </StackPanel>
     </ScrollViewer>
