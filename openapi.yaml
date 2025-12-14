@@ -166,10 +166,12 @@ components:
       properties:
         carps:
           type: array
+          description: Список всех карпов.
           items:
             $ref: '#/components/schemas/Carp'
         mackerels:
           type: array
+          description: Список всех скумбрий.
           items:
             $ref: '#/components/schemas/Mackerel'
   requestBodies:
@@ -241,4 +243,5 @@ components:
             properties:
               message:
                 type: string
+                description: Текстовое описание ошибки.
                 example: Объект не найден
