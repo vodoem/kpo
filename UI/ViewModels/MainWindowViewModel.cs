@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Reactive;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
@@ -13,6 +15,7 @@ using Duz_vadim_project.DesignPatterns.PrototypeFactory;
 using ProgressDisplay;
 using ReactiveUI;
 using UI.Generator;
+using UI.Services;
 using UI.ViewModels.EditFish;
 
 namespace UI.ViewModels;
@@ -61,6 +64,11 @@ public partial class MainWindowViewModel : ViewModelBase
   /// Признак того, что панель фильтров видима пользователю.
   /// </summary>
   private bool _isFilterVisible = true;
+
+  /// <summary>
+  /// HTTP-клиент для взаимодействия с сервером.
+  /// </summary>
+  private readonly FishApiClient _apiClient;
 
   /// <summary>
   /// Выбранная фабрика для создания объектов рыб.
@@ -175,6 +183,11 @@ public partial class MainWindowViewModel : ViewModelBase
   public ReactiveCommand<Unit, Unit> DeleteCommand { get; }
 
   /// <summary>
+  /// Команда для перечитывания данных с сервера.
+  /// </summary>
+  public ReactiveCommand<Unit, Unit> RefreshFromServerCommand { get; }
+
+  /// <summary>
   /// Команда для генерации тестового списка рыб.
   /// </summary>
   public ReactiveCommand<Unit, Unit> GenerateTestFishCommand { get; }
@@ -203,6 +216,10 @@ public partial class MainWindowViewModel : ViewModelBase
   /// </summary>
   public MainWindowViewModel()
   {
+    var schemaPath = Path.Combine(AppContext.BaseDirectory, "openapi.yaml");
+    var httpClient = new HttpClient { BaseAddress = new Uri("http://localhost:5000") };
+    _apiClient = new FishApiClient(httpClient, schemaPath);
+
     ShowEditFishDialog = new Interaction<ViewModelBase, Fish?>();
     FocusFishRequest = new Interaction<Fish, Unit>();
 
@@ -211,6 +228,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     EditCommand = ReactiveCommand.CreateFromTask(EditFishCommand, this.WhenAnyValue(parX => parX.CanEditOrDelete));
     DeleteCommand = ReactiveCommand.CreateFromTask(DeleteFishAsync, this.WhenAnyValue(parX => parX.CanEditOrDelete));
+    RefreshFromServerCommand = ReactiveCommand.CreateFromTask(RefreshFromServerAsync);
 
     GenerateTestFishCommand = ReactiveCommand.CreateFromTask(GenerateTestFishAsync);
     ApplyFilterCommand = ReactiveCommand.Create(() => ApplyFilter());
@@ -218,6 +236,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     InitializeFactories(0);
     ApplyFilter();
+    _ = RefreshFromServerCommand.Execute();
   }
 
   /// <summary>
@@ -233,8 +252,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     if (result != null)
     {
-      _allFish.Add(result);
-      ApplyFilter(result);
+      await PersistNewFishAsync(result);
     }
   }
 
@@ -251,8 +269,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     if (result != null)
     {
-      _allFish.Add(result);
-      ApplyFilter(result);
+      await PersistNewFishAsync(result);
     }
   }
 
@@ -283,7 +300,7 @@ public partial class MainWindowViewModel : ViewModelBase
     var result = await ShowEditFishDialog.Handle(editViewModel);
     if (result != null)
     {
-      SelectedFish.CopyFrom(result);
+      await UpdateFishAsync(result);
     }
   }
 
@@ -314,9 +331,168 @@ public partial class MainWindowViewModel : ViewModelBase
     var result = await ShowEditFishDialog.Handle(deleteViewModel);
     if (result != null && SelectedFish != null)
     {
-      _allFish.Remove(SelectedFish);
-      ApplyFilter();
+      await RemoveFishAsync(SelectedFish);
     }
+  }
+
+  /// <summary>
+  /// Сохраняет новый объект на сервере или локально.
+  /// </summary>
+  /// <param name="fish">Новая рыба.</param>
+  private async Task PersistNewFishAsync(Fish fish)
+  {
+    try
+    {
+      if (IsServerFish(fish))
+      {
+        var created = await CreateOnServerAsync(fish).ConfigureAwait(false);
+        if (created != null)
+        {
+          _allFish.Add(created);
+          ApplyFilter(created);
+        }
+      }
+      else
+      {
+        _allFish.Add(fish);
+        ApplyFilter(fish);
+      }
+    }
+    catch (Exception ex)
+    {
+      Console.WriteLine($"Ошибка при сохранении рыбы: {ex.Message}");
+    }
+  }
+
+  /// <summary>
+  /// Обновляет существующую рыбу.
+  /// </summary>
+  /// <param name="updatedFish">Отредактированное значение.</param>
+  private async Task UpdateFishAsync(Fish updatedFish)
+  {
+    if (SelectedFish is null)
+    {
+      return;
+    }
+
+    try
+    {
+      if (IsServerFish(updatedFish))
+      {
+        var refreshed = await UpdateOnServerAsync(updatedFish).ConfigureAwait(false);
+        if (refreshed != null)
+        {
+          SelectedFish.CopyFrom(refreshed);
+        }
+      }
+      else
+      {
+        SelectedFish.CopyFrom(updatedFish);
+      }
+    }
+    catch (Exception ex)
+    {
+      Console.WriteLine($"Ошибка при обновлении рыбы: {ex.Message}");
+    }
+  }
+
+  /// <summary>
+  /// Удаляет рыбу из хранилища.
+  /// </summary>
+  /// <param name="fish">Удаляемая рыба.</param>
+  private async Task RemoveFishAsync(Fish fish)
+  {
+    try
+    {
+      if (!IsServerFish(fish))
+      {
+        _allFish.Remove(fish);
+        ApplyFilter();
+        return;
+      }
+
+      var deleted = await DeleteOnServerAsync(fish).ConfigureAwait(false);
+      if (deleted)
+      {
+        _allFish.Remove(fish);
+        ApplyFilter();
+      }
+    }
+    catch (Exception ex)
+    {
+      Console.WriteLine($"Ошибка при удалении рыбы: {ex.Message}");
+    }
+  }
+
+  /// <summary>
+  /// Обновляет данные из сервера и сохраняет выделение.
+  /// </summary>
+  private async Task RefreshFromServerAsync()
+  {
+    var previousSelection = SelectedFish;
+
+    try
+    {
+      var collections = await _apiClient.GetCollectionsAsync().ConfigureAwait(false);
+      if (collections == null)
+      {
+        return;
+      }
+
+      var newData = new List<Fish>();
+      newData.AddRange(collections.Carps);
+      newData.AddRange(collections.Mackerels);
+      
+      await Dispatcher.UIThread.InvokeAsync(() =>
+      {
+        _allFish.Clear();
+        _allFish.AddRange(newData);
+        
+        ApplyFilter(previousSelection);
+      });
+    }
+    catch (Exception ex)
+    {
+      Console.WriteLine($"Не удалось загрузить данные с сервера: {ex.Message}");
+    }
+  }
+
+
+  private async Task<Fish?> CreateOnServerAsync(Fish fish)
+  {
+    return fish switch
+    {
+      Carp carp => await _apiClient.CreateCarpAsync(carp).ConfigureAwait(false),
+      Mackerel mackerel => await _apiClient.CreateMackerelAsync(mackerel).ConfigureAwait(false),
+      _ => null
+    };
+  }
+
+  private async Task<Fish?> UpdateOnServerAsync(Fish fish)
+  {
+    return fish switch
+    {
+      Carp carp => await _apiClient.UpdateCarpAsync(carp).ConfigureAwait(false),
+      Mackerel mackerel => await _apiClient.UpdateMackerelAsync(mackerel).ConfigureAwait(false),
+      _ => null
+    };
+  }
+
+  private Task<bool> DeleteOnServerAsync(Fish fish)
+  {
+    return fish switch
+    {
+      Carp carp => _apiClient.DeleteCarpAsync(carp),
+      Mackerel mackerel => _apiClient.DeleteMackerelAsync(mackerel),
+      _ => Task.FromResult(false)
+    };
+  }
+
+  private static bool IsServerFish(Fish fish) => fish is Carp || fish is Mackerel;
+
+  private static Fish? FindMatchingFish(IEnumerable<Fish> source, Fish target)
+  {
+    return source.FirstOrDefault(fish => fish.Id == target.Id && fish.TypeName == target.TypeName);
   }
 
   /// <summary>
@@ -449,7 +625,9 @@ public partial class MainWindowViewModel : ViewModelBase
 
     if (selectionToRestore != null)
     {
-      var restoredSelection = _filteredFish.FirstOrDefault(parFish => ReferenceEquals(parFish, selectionToRestore));
+      var restoredSelection = _filteredFish.FirstOrDefault(parFish => ReferenceEquals(parFish, selectionToRestore))
+                             ?? _filteredFish.FirstOrDefault(parFish => parFish.Id == selectionToRestore.Id
+                                                                       && parFish.TypeName == selectionToRestore.TypeName);
       if (restoredSelection != null)
       {
         SelectedFish = null;
