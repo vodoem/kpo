@@ -429,7 +429,9 @@ public partial class MainWindowViewModel : ViewModelBase
   /// </summary>
   private async Task RefreshFromServerAsync()
   {
-    var previousSelection = SelectedFish;
+    var previousKey = SelectedFish != null
+      ? (SelectedFish.Id, SelectedFish.TypeName)
+      : ((int Id, string TypeName)?)null;
     try
     {
       var collections = await _apiClient.GetCollectionsAsync().ConfigureAwait(false);
@@ -445,13 +447,19 @@ public partial class MainWindowViewModel : ViewModelBase
       _allFish.Clear();
       _allFish.AddRange(newData);
 
-      Fish? selectionToRestore = null;
-      if (previousSelection != null)
-      {
-        selectionToRestore = FindMatchingFish(newData, previousSelection);
-      }
+      ApplyFilter();
 
-      ApplyFilter(selectionToRestore);
+      if (previousKey != null)
+      {
+        var restoredSelection = _filteredFish.FirstOrDefault(parFish => parFish.Id == previousKey.Value.Id
+                                                                        && parFish.TypeName == previousKey.Value.TypeName);
+        if (restoredSelection != null)
+        {
+          SelectedFish = null;
+          SelectedFish = restoredSelection;
+          _ = FocusFishRequest.Handle(restoredSelection);
+        }
+      }
     }
     catch (Exception ex)
     {
