@@ -626,7 +626,9 @@ public partial class MainWindowViewModel : ViewModelBase
 
     if (selectionToRestore != null)
     {
-      var restoredSelection = _filteredFish.FirstOrDefault(parFish => ReferenceEquals(parFish, selectionToRestore));
+      var restoredSelection = _filteredFish.FirstOrDefault(parFish => ReferenceEquals(parFish, selectionToRestore))
+                             ?? _filteredFish.FirstOrDefault(parFish => parFish.Id == selectionToRestore.Id
+                                                                       && parFish.TypeName == selectionToRestore.TypeName);
       if (restoredSelection != null)
       {
         SelectedFish = null;
