@@ -1,0 +1,247 @@
+openapi: 3.0.3
+info:
+  title: Рыбное хранилище
+  version: 1.0.0
+  description: |
+    Сервис управления объектами иерархии Fish/FreshwaterFish/SaltwaterFish.
+    Уникальные идентификаторы назначаются на сервере и возвращаются в ответах.
+servers:
+  - url: https://api.example.com
+paths:
+  /list:
+    get:
+      summary: Получить списки всех рыб по типам
+      operationId: getFishLists
+      responses:
+        '200':
+          $ref: '#/components/responses/FishCollectionsResponse'
+  /Carp:
+    post:
+      summary: Создать нового карпа
+      operationId: createCarp
+      requestBody:
+        $ref: '#/components/requestBodies/CarpCreate'
+      responses:
+        '201':
+          $ref: '#/components/responses/CarpCreated'
+  /Carp/{id}:
+    parameters:
+      - $ref: '#/components/parameters/FishId'
+    get:
+      summary: Получить данные карпа
+      operationId: getCarpById
+      responses:
+        '200':
+          $ref: '#/components/responses/CarpResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      summary: Обновить данные карпа
+      operationId: updateCarp
+      requestBody:
+        $ref: '#/components/requestBodies/CarpUpdate'
+      responses:
+        '200':
+          $ref: '#/components/responses/CarpResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /Mackerel:
+    post:
+      summary: Создать новую скумбрию
+      operationId: createMackerel
+      requestBody:
+        $ref: '#/components/requestBodies/MackerelCreate'
+      responses:
+        '201':
+          $ref: '#/components/responses/MackerelCreated'
+  /Mackerel/{id}:
+    parameters:
+      - $ref: '#/components/parameters/FishId'
+    get:
+      summary: Получить данные скумбрии
+      operationId: getMackerelById
+      responses:
+        '200':
+          $ref: '#/components/responses/MackerelResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      summary: Обновить данные скумбрии
+      operationId: updateMackerel
+      requestBody:
+        $ref: '#/components/requestBodies/MackerelUpdate'
+      responses:
+        '200':
+          $ref: '#/components/responses/MackerelResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  parameters:
+    FishId:
+      name: id
+      in: path
+      required: true
+      description: Уникальный идентификатор объекта
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+  schemas:
+    Fish:
+      type: object
+      required:
+        - id
+        - typeName
+        - weight
+        - age
+        - isEdible
+      properties:
+        id:
+          type: integer
+          format: int32
+          readOnly: true
+          description: Уникальный идентификатор, назначаемый сервером.
+        typeName:
+          type: string
+          readOnly: true
+          description: Имя конкретного типа для десериализации.
+          example: Fish
+        weight:
+          type: number
+          format: decimal
+          description: Вес рыбы в граммах.
+        age:
+          type: integer
+          format: int32
+          description: Возраст рыбы в годах.
+        isEdible:
+          type: boolean
+          description: Является ли рыба съедобной.
+    FreshwaterFish:
+      allOf:
+        - $ref: '#/components/schemas/Fish'
+        - type: object
+          required:
+            - habitatDepth
+          properties:
+            habitatDepth:
+              type: number
+              format: decimal
+              description: Глубина обитания в метрах.
+    SaltwaterFish:
+      allOf:
+        - $ref: '#/components/schemas/Fish'
+        - type: object
+          required:
+            - salinity
+          properties:
+            salinity:
+              type: number
+              format: decimal
+              description: Соленость воды в промилле.
+    Carp:
+      allOf:
+        - $ref: '#/components/schemas/FreshwaterFish'
+        - type: object
+          required:
+            - scaleColor
+          properties:
+            scaleColor:
+              type: string
+              description: Цвет чешуи карпа.
+              example: Золотистый
+    Mackerel:
+      allOf:
+        - $ref: '#/components/schemas/SaltwaterFish'
+        - type: object
+          required:
+            - gillSize
+          properties:
+            gillSize:
+              type: number
+              format: decimal
+              description: Размер жабр скумбрии.
+    FishCollections:
+      type: object
+      properties:
+        carps:
+          type: array
+          description: Список всех карпов.
+          items:
+            $ref: '#/components/schemas/Carp'
+        mackerels:
+          type: array
+          description: Список всех скумбрий.
+          items:
+            $ref: '#/components/schemas/Mackerel'
+  requestBodies:
+    CarpCreate:
+      description: Данные для создания карпа. Поля id и typeName игнорируются сервером.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Carp'
+    CarpUpdate:
+      description: Данные для обновления карпа. Идентификатор задается в пути.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Carp'
+    MackerelCreate:
+      description: Данные для создания скумбрии. Поля id и typeName игнорируются сервером.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Mackerel'
+    MackerelUpdate:
+      description: Данные для обновления скумбрии. Идентификатор задается в пути.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Mackerel'
+  responses:
+    FishCollectionsResponse:
+      description: Списки всех рыб по типам.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FishCollections'
+    CarpCreated:
+      description: Карп создан.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Carp'
+    CarpResponse:
+      description: Данные о карпе.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Carp'
+    MackerelCreated:
+      description: Скумбрия создана.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Mackerel'
+    MackerelResponse:
+      description: Данные о скумбрии.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Mackerel'
+    NotFound:
+      description: Объект не найден.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: Текстовое описание ошибки.
+                example: Объект не найден
