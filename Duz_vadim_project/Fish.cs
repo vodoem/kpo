@@ -7,7 +7,7 @@ namespace Duz_vadim_project;
 /// <summary>
 /// Все виды рыб
 /// </summary>
-public partial class Fish : ObservableObject, ICloneable
+public partial class Fish : ObservableValidator, ICloneable
 {
   /// <summary>
   /// Бэкинг-филд для идентификатора.
