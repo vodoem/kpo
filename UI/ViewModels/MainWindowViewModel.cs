@@ -71,11 +71,6 @@ public partial class MainWindowViewModel : ViewModelBase
   private readonly FishApiClient _apiClient;
 
   /// <summary>
-  /// Разрешить отправку запросов, нарушающих схему OpenAPI, для проверки серверной валидации.
-  /// </summary>
-  private bool _allowInvalidRequests;
-
-  /// <summary>
   /// Выбранная фабрика для создания объектов рыб.
   /// </summary>
   private IFishFactory? _selectedFactory;
@@ -217,19 +212,6 @@ public partial class MainWindowViewModel : ViewModelBase
   }
 
   /// <summary>
-  /// Переключатель, позволяющий отправлять невалидные запросы для проверки серверной валидации.
-  /// </summary>
-  public bool AllowInvalidRequests
-  {
-    get => _allowInvalidRequests;
-    set
-    {
-      this.RaiseAndSetIfChanged(ref _allowInvalidRequests, value);
-      _apiClient.ValidateRequests = !value;
-    }
-  }
-
-  /// <summary>
   /// Конструктор по умолчанию.
   /// </summary>
   public MainWindowViewModel()
@@ -237,8 +219,6 @@ public partial class MainWindowViewModel : ViewModelBase
     var schemaPath = Path.Combine(AppContext.BaseDirectory, "openapi.yaml");
     var httpClient = new HttpClient { BaseAddress = new Uri("http://localhost:5000") };
     _apiClient = new FishApiClient(httpClient, schemaPath);
-    _allowInvalidRequests = false;
-    _apiClient.ValidateRequests = true;
 
     ShowEditFishDialog = new Interaction<ViewModelBase, Fish?>();
     FocusFishRequest = new Interaction<Fish, Unit>();

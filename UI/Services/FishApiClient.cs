@@ -25,11 +25,6 @@ public class FishApiClient
   };
 
   /// <summary>
-  /// Выполнять ли проверку исходящих запросов по схеме OpenAPI.
-  /// </summary>
-  public bool ValidateRequests { get; set; } = true;
-
-  /// <summary>
   /// Выполнять ли проверку входящих ответов по схеме OpenAPI.
   /// </summary>
   public bool ValidateResponses { get; set; } = true;
@@ -161,10 +156,7 @@ public class FishApiClient
     if (payload != null)
     {
       serializedPayload = JsonSerializer.Serialize(payload, _serializerOptions);
-      if (ValidateRequests)
-      {
-        EnsureValid(_validator.ValidateRequest(operationId, method.Method, validationPath, serializedPayload), operationId, validationPath, isResponse: false);
-      }
+      EnsureValid(_validator.ValidateRequest(operationId, method.Method, validationPath, serializedPayload), operationId, validationPath, isResponse: false);
     }
 
     using var request = new HttpRequestMessage(method, path);
