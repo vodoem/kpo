@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -95,12 +96,10 @@ public class OpenApiSchemaValidator
 
     private OpenApiOperation FindOperation(string operationId, string method, string path)
     {
-        if (!_openApiDocument.Paths.ContainsKey(path))
-        {
-            throw new InvalidOperationException($"Path {path} not found in OpenAPI schema");
-        }
+        var resolvedPath = ResolvePath(path)
+            ?? throw new InvalidOperationException($"Path {path} not found in OpenAPI schema");
 
-        var pathItem = _openApiDocument.Paths[path];
+        var pathItem = _openApiDocument.Paths[resolvedPath];
         var operationType = method.ToLower() switch
         {
             "get" => OperationType.Get,
@@ -123,6 +122,48 @@ public class OpenApiSchemaValidator
         }
 
         return operation;
+    }
+
+    private string? ResolvePath(string path)
+    {
+        if (_openApiDocument.Paths.ContainsKey(path))
+        {
+            return path;
+        }
+
+        var requestedSegments = path.Trim('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+
+        foreach (var candidate in _openApiDocument.Paths.Keys)
+        {
+            var templateSegments = candidate.Trim('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+            if (requestedSegments.Length != templateSegments.Length)
+            {
+                continue;
+            }
+
+            var matched = true;
+            for (int i = 0; i < requestedSegments.Length; i++)
+            {
+                var templateSegment = templateSegments[i];
+                if (templateSegment.StartsWith("{") && templateSegment.EndsWith("}"))
+                {
+                    continue;
+                }
+
+                if (!string.Equals(templateSegment, requestedSegments[i], StringComparison.Ordinal))
+                {
+                    matched = false;
+                    break;
+                }
+            }
+
+            if (matched)
+            {
+                return candidate;
+            }
+        }
+
+        return null;
     }
 
     private ValidationResult ValidateAgainstSchema(string jsonPayload, OpenApiSchema schema)
