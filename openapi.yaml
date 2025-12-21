@@ -15,6 +15,8 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/FishCollectionsResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /Carp:
     post:
       summary: Создать нового карпа
@@ -24,6 +26,10 @@ paths:
       responses:
         '201':
           $ref: '#/components/responses/CarpCreated'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /Carp/{id}:
     parameters:
       - $ref: '#/components/parameters/FishId'
@@ -35,6 +41,8 @@ paths:
           $ref: '#/components/responses/CarpResponse'
         '404':
           $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     put:
       summary: Обновить данные карпа
       operationId: updateCarp
@@ -43,8 +51,12 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/CarpResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
         '404':
           $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     delete:
       summary: Удалить карпа
       operationId: deleteCarp
@@ -53,6 +65,8 @@ paths:
           $ref: '#/components/responses/Deleted'
         '404':
           $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /Mackerel:
     post:
       summary: Создать новую скумбрию
@@ -62,6 +76,10 @@ paths:
       responses:
         '201':
           $ref: '#/components/responses/MackerelCreated'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /Mackerel/{id}:
     parameters:
       - $ref: '#/components/parameters/FishId'
@@ -73,6 +91,8 @@ paths:
           $ref: '#/components/responses/MackerelResponse'
         '404':
           $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     put:
       summary: Обновить данные скумбрии
       operationId: updateMackerel
@@ -81,8 +101,12 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/MackerelResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
         '404':
           $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     delete:
       summary: Удалить скумбрию
       operationId: deleteMackerel
@@ -91,6 +115,8 @@ paths:
           $ref: '#/components/responses/Deleted'
         '404':
           $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 components:
   parameters:
     FishId:
@@ -103,6 +129,25 @@ components:
         format: int32
         minimum: 1
   schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - description
+      properties:
+        code:
+          type: string
+          description: Короткий код ошибки.
+          example: NotFound
+        description:
+          type: string
+          description: Человеко-читаемое описание ошибки.
+          example: Объект не найден
+        errors:
+          type: array
+          description: Дополнительные подробности об ошибке.
+          items:
+            type: string
     Fish:
       type: object
       required:
@@ -220,6 +265,34 @@ components:
           schema:
             $ref: '#/components/schemas/Mackerel'
   responses:
+    ValidationError:
+      description: Ошибка валидации запроса.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            validation:
+              summary: Некорректные данные.
+              value:
+                code: ValidationError
+                description: Данные не прошли валидацию
+                errors:
+                  - Вес рыбы должен быть больше 0
+    InternalServerError:
+      description: Внутренняя ошибка сервера.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            schemaMismatch:
+              summary: Ответ не соответствует схеме.
+              value:
+                code: OpenApiResponseInvalid
+                description: Ответ не соответствует схеме OpenAPI
+                errors:
+                  - Поле weight отсутствует
     FishCollectionsResponse:
       description: Списки всех рыб по типам.
       content:
@@ -265,9 +338,10 @@ components:
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              message:
-                type: string
-                description: Текстовое описание ошибки.
-                example: Объект не найден
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing:
+              summary: Объект отсутствует.
+              value:
+                code: NotFound
+                description: Объект не найден
