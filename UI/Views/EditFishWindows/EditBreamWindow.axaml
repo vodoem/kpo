@@ -20,7 +20,7 @@
         <StackPanel>
           <TextBlock Margin="0,0,0,1" Text="Идентификатор" />
           <TextBox
-            IsEnabled="{Binding !IsViewMode}"
+            IsEnabled="False"
             IsReadOnly="True"
             Text="{Binding FishInstance.Id}"
             Watermark="Идентификатор" />
