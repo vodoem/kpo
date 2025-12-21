@@ -39,6 +39,8 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/CarpResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
@@ -63,6 +65,8 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/Deleted'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
@@ -89,6 +93,8 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/MackerelResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
@@ -113,6 +119,8 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/Deleted'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
@@ -137,17 +145,7 @@ components:
       properties:
         code:
           type: string
-          description: |
-            Короткий код ошибки.
-
-            Возможные значения:
-              - ValidationError: входные данные или запрос не прошли валидацию.
-              - NotFound: запрошенный объект не найден.
-              - OpenApiResponseInvalid: сервер сформировал ответ, не соответствующий схеме OpenAPI.
-          enum:
-            - ValidationError
-            - NotFound
-            - OpenApiResponseInvalid
+          description: Короткий код ошибки.
           example: NotFound
         description:
           type: string
@@ -296,13 +294,11 @@ components:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
           examples:
-            schemaMismatch:
-              summary: Ответ не соответствует схеме.
+            unexpected:
+              summary: Непредвиденная ошибка.
               value:
-                code: OpenApiResponseInvalid
-                description: Ответ не соответствует схеме OpenAPI
-                errors:
-                  - Поле weight отсутствует
+                code: InternalServerError
+                description: Произошла непредвиденная ошибка. Попробуйте позже
     FishCollectionsResponse:
       description: Списки всех рыб по типам.
       content:
@@ -355,3 +351,17 @@ components:
               value:
                 code: NotFound
                 description: Объект не найден
+    BadRequest:
+      description: Некорректный запрос (неверные параметры/формат запроса).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            invalidId:
+              summary: Некорректный идентификатор в пути.
+              value:
+                code: BadRequest
+                description: Параметр id должен быть целым числом >= 1
+                errors:
+                  - id: должно быть >= 1

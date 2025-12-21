@@ -216,7 +216,7 @@ static IResult ValidateResponse<T>(OpenApiSchemaValidator validator, JsonSeriali
   return validation.IsValid
     ? onSuccess()
     : Results.Json(
-    CreateErrorPayload("OpenApiResponseInvalid", "Ответ не соответствует схеме OpenAPI",
+    CreateErrorPayload("InternalServerError", "Произошла непредвиденная ошибка. Попробуйте позже",
       new[] { validation.ErrorMessage ?? "Ошибка валидации OpenAPI" }),
     statusCode: StatusCodes.Status500InternalServerError);
 }
