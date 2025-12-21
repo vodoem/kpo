@@ -137,7 +137,17 @@ components:
       properties:
         code:
           type: string
-          description: Короткий код ошибки.
+          description: |
+            Короткий код ошибки.
+
+            Возможные значения:
+              - ValidationError: входные данные или запрос не прошли валидацию.
+              - NotFound: запрошенный объект не найден.
+              - OpenApiResponseInvalid: сервер сформировал ответ, не соответствующий схеме OpenAPI.
+          enum:
+            - ValidationError
+            - NotFound
+            - OpenApiResponseInvalid
           example: NotFound
         description:
           type: string
