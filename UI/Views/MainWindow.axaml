@@ -76,6 +76,11 @@
       SelectedItem="{Binding SelectedFish, Mode=TwoWay}">
       <DataGrid.Columns>
         <DataGridTextColumn
+          Width="Auto"
+          MinWidth="80"
+          Binding="{Binding Id}"
+          Header="ID" />
+        <DataGridTextColumn
           Width="*"
           MinWidth="100"
           Binding="{Binding Weight}"
