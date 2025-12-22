@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Duz_vadim_project;
 
 namespace Server;
@@ -12,6 +13,7 @@ public class FishRepository
   private FishCollections _state = new();
   private int _nextId = 1;
   private DateTime? _lastLoadedWriteTimeUtc;
+  private Exception? _dataFileLoadException;
 
   /// <summary>
   /// Создаёт новый экземпляр хранилища.
@@ -32,6 +34,7 @@ public class FishRepository
     try
     {
       ReloadStateIfChanged();
+      EnsureDataFileHealthy();
       return CloneState(_state);
     }
     finally
@@ -49,6 +52,7 @@ public class FishRepository
     try
     {
       ReloadStateIfChanged();
+      EnsureDataFileHealthy();
       return _state.Carps.FirstOrDefault(fish => fish.Id == id)?.Clone() as Carp;
     }
     finally
@@ -66,6 +70,7 @@ public class FishRepository
     try
     {
       ReloadStateIfChanged();
+      EnsureDataFileHealthy();
       return _state.Mackerels.FirstOrDefault(fish => fish.Id == id)?.Clone() as Mackerel;
     }
     finally
@@ -85,6 +90,7 @@ public class FishRepository
     try
     {
       ReloadStateIfChanged();
+      EnsureDataFileHealthy();
       stored.Id = _nextId++;
       _state.Carps.Add(stored);
       await SaveAsync();
@@ -107,6 +113,7 @@ public class FishRepository
     try
     {
       ReloadStateIfChanged();
+      EnsureDataFileHealthy();
       stored.Id = _nextId++;
       _state.Mackerels.Add(stored);
       await SaveAsync();
@@ -130,6 +137,7 @@ public class FishRepository
     try
     {
       ReloadStateIfChanged();
+      EnsureDataFileHealthy();
       var existing = _state.Carps.FirstOrDefault(fish => fish.Id == id);
       if (existing is null)
       {
@@ -158,6 +166,7 @@ public class FishRepository
     try
     {
       ReloadStateIfChanged();
+      EnsureDataFileHealthy();
       var existing = _state.Mackerels.FirstOrDefault(fish => fish.Id == id);
       if (existing is null)
       {
@@ -183,6 +192,7 @@ public class FishRepository
     try
     {
       ReloadStateIfChanged();
+      EnsureDataFileHealthy();
       var removed = _state.Carps.RemoveAll(fish => fish.Id == id) > 0;
       if (removed)
       {
@@ -206,6 +216,7 @@ public class FishRepository
     try
     {
       ReloadStateIfChanged();
+      EnsureDataFileHealthy();
       var removed = _state.Mackerels.RemoveAll(fish => fish.Id == id) > 0;
       if (removed)
       {
@@ -225,18 +236,35 @@ public class FishRepository
     if (!File.Exists(_storagePath))
     {
       _state = new FishCollections();
+      _nextId = 1;
+      _dataFileLoadException = null;
+      _lastLoadedWriteTimeUtc = null;
       return;
     }
 
-    var json = File.ReadAllText(_storagePath);
-    var loaded = System.Text.Json.JsonSerializer.Deserialize<FishCollections>(json);
-    _state = loaded ?? new FishCollections();
-    _nextId = _state.Carps.Cast<Fish>().Concat(_state.Mackerels).Select(fish => fish.Id).DefaultIfEmpty(0).Max() + 1;
-    _lastLoadedWriteTimeUtc = File.GetLastWriteTimeUtc(_storagePath);
+    try
+    {
+      var json = File.ReadAllText(_storagePath);
+      var loaded = JsonSerializer.Deserialize<FishCollections>(json);
+      _state = loaded ?? new FishCollections();
+      _nextId = _state.Carps.Cast<Fish>().Concat(_state.Mackerels).Select(fish => fish.Id).DefaultIfEmpty(0).Max() + 1;
+      _dataFileLoadException = null;
+    }
+    catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
+    {
+      _state = new FishCollections();
+      _nextId = 1;
+      _dataFileLoadException = ex;
+    }
+    finally
+    {
+      _lastLoadedWriteTimeUtc = File.GetLastWriteTimeUtc(_storagePath);
+    }
   }
 
   private async Task SaveAsync()
   {
+    EnsureDataFileHealthy();
     var directory = Path.GetDirectoryName(_storagePath);
     if (!string.IsNullOrWhiteSpace(directory))
     {
@@ -255,6 +283,10 @@ public class FishRepository
   {
     if (!File.Exists(_storagePath))
     {
+      _state = new FishCollections();
+      _nextId = 1;
+      _dataFileLoadException = null;
+      _lastLoadedWriteTimeUtc = null;
       return;
     }
 
@@ -263,6 +295,16 @@ public class FishRepository
     {
       LoadState();
     }
+  }
+
+  private void EnsureDataFileHealthy()
+  {
+    if (_dataFileLoadException is null)
+    {
+      return;
+    }
+
+    throw new DataFileCorruptedException("Файл данных повреждён и не может быть загружен.", _dataFileLoadException);
   }
 
   private static FishCollections CloneState(FishCollections source) => new()
