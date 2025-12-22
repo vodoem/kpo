@@ -64,8 +64,16 @@ app.MapPost("/Carp", async (Carp carp, FishRepository repository) =>
       return requestError;
     }
 
-    var created = await repository.AddCarpAsync(carp);
-    return ValidateResponse(validator, serializerOptions, "createCarp", HttpMethod.Post, "/Carp", created, HttpStatusCode.Created, () => Results.Created($"/Carp/{created.Id}", created));
+    try
+    {
+      var created = await repository.AddCarpAsync(carp);
+      return ValidateResponse(validator, serializerOptions, "createCarp", HttpMethod.Post, "/Carp", created, HttpStatusCode.Created, () => Results.Created($"/Carp/{created.Id}", created));
+    }
+    catch (DataFileCorruptedException ex)
+    {
+      return BuildErrorResponse(validator, serializerOptions, "createCarp", HttpMethod.Post, "/Carp", HttpStatusCode.InternalServerError, "DataFileCorrupted",
+        "Файл данных поврежден. Невозможно сохранить изменения.", new[] { ex.Message });
+    }
   })
   .WithName("createCarp");
 
@@ -95,26 +103,42 @@ app.MapPut("/Carp/{id:int}", async (int id, Carp carp, FishRepository repository
       return requestError;
     }
 
-    var updated = await repository.UpdateCarpAsync(id, carp);
-    if (updated is null)
+    try
     {
-      return BuildErrorResponse(validator, serializerOptions, "updateCarp", HttpMethod.Put, "/Carp/{id}", HttpStatusCode.NotFound, "NotFound", "Объект не найден");
-    }
+      var updated = await repository.UpdateCarpAsync(id, carp);
+      if (updated is null)
+      {
+        return BuildErrorResponse(validator, serializerOptions, "updateCarp", HttpMethod.Put, "/Carp/{id}", HttpStatusCode.NotFound, "NotFound", "Объект не найден");
+      }
 
-    return ValidateResponse(validator, serializerOptions, "updateCarp", HttpMethod.Put, "/Carp/{id}", updated, HttpStatusCode.OK, () => Results.Ok(updated));
+      return ValidateResponse(validator, serializerOptions, "updateCarp", HttpMethod.Put, "/Carp/{id}", updated, HttpStatusCode.OK, () => Results.Ok(updated));
+    }
+    catch (DataFileCorruptedException ex)
+    {
+      return BuildErrorResponse(validator, serializerOptions, "updateCarp", HttpMethod.Put, "/Carp/{id}", HttpStatusCode.InternalServerError, "DataFileCorrupted",
+        "Файл данных поврежден. Невозможно сохранить изменения.", new[] { ex.Message });
+    }
   })
   .WithName("updateCarp");
 
 app.MapDelete("/Carp/{id:int}", async (int id, FishRepository repository) =>
   {
-    var removed = await repository.DeleteCarpAsync(id);
-    if (removed)
+    try
     {
-      var ok = new { message = "Удалено" };
-      return ValidateResponse(validator, serializerOptions, "deleteCarp", HttpMethod.Delete, "/Carp/{id}", ok, HttpStatusCode.OK, () => Results.Ok(ok));
-    }
+      var removed = await repository.DeleteCarpAsync(id);
+      if (removed)
+      {
+        var ok = new { message = "Удалено" };
+        return ValidateResponse(validator, serializerOptions, "deleteCarp", HttpMethod.Delete, "/Carp/{id}", ok, HttpStatusCode.OK, () => Results.Ok(ok));
+      }
 
-    return BuildErrorResponse(validator, serializerOptions, "deleteCarp", HttpMethod.Delete, "/Carp/{id}", HttpStatusCode.NotFound, "NotFound", "Объект не найден");
+      return BuildErrorResponse(validator, serializerOptions, "deleteCarp", HttpMethod.Delete, "/Carp/{id}", HttpStatusCode.NotFound, "NotFound", "Объект не найден");
+    }
+    catch (DataFileCorruptedException ex)
+    {
+      return BuildErrorResponse(validator, serializerOptions, "deleteCarp", HttpMethod.Delete, "/Carp/{id}", HttpStatusCode.InternalServerError, "DataFileCorrupted",
+        "Файл данных поврежден. Невозможно сохранить изменения.", new[] { ex.Message });
+    }
   })
   .WithName("deleteCarp");
 
@@ -131,8 +155,16 @@ app.MapPost("/Mackerel", async (Mackerel mackerel, FishRepository repository) =>
       return requestError;
     }
 
-    var created = await repository.AddMackerelAsync(mackerel);
-    return ValidateResponse(validator, serializerOptions, "createMackerel", HttpMethod.Post, "/Mackerel", created, HttpStatusCode.Created, () => Results.Created($"/Mackerel/{created.Id}", created));
+    try
+    {
+      var created = await repository.AddMackerelAsync(mackerel);
+      return ValidateResponse(validator, serializerOptions, "createMackerel", HttpMethod.Post, "/Mackerel", created, HttpStatusCode.Created, () => Results.Created($"/Mackerel/{created.Id}", created));
+    }
+    catch (DataFileCorruptedException ex)
+    {
+      return BuildErrorResponse(validator, serializerOptions, "createMackerel", HttpMethod.Post, "/Mackerel", HttpStatusCode.InternalServerError, "DataFileCorrupted",
+        "Файл данных поврежден. Невозможно сохранить изменения.", new[] { ex.Message });
+    }
   })
   .WithName("createMackerel");
 
@@ -162,26 +194,42 @@ app.MapPut("/Mackerel/{id:int}", async (int id, Mackerel mackerel, FishRepositor
       return requestError;
     }
 
-    var updated = await repository.UpdateMackerelAsync(id, mackerel);
-    if (updated is null)
+    try
     {
-      return BuildErrorResponse(validator, serializerOptions, "updateMackerel", HttpMethod.Put, "/Mackerel/{id}", HttpStatusCode.NotFound, "NotFound", "Объект не найден");
-    }
+      var updated = await repository.UpdateMackerelAsync(id, mackerel);
+      if (updated is null)
+      {
+        return BuildErrorResponse(validator, serializerOptions, "updateMackerel", HttpMethod.Put, "/Mackerel/{id}", HttpStatusCode.NotFound, "NotFound", "Объект не найден");
+      }
 
-    return ValidateResponse(validator, serializerOptions, "updateMackerel", HttpMethod.Put, "/Mackerel/{id}", updated, HttpStatusCode.OK, () => Results.Ok(updated));
+      return ValidateResponse(validator, serializerOptions, "updateMackerel", HttpMethod.Put, "/Mackerel/{id}", updated, HttpStatusCode.OK, () => Results.Ok(updated));
+    }
+    catch (DataFileCorruptedException ex)
+    {
+      return BuildErrorResponse(validator, serializerOptions, "updateMackerel", HttpMethod.Put, "/Mackerel/{id}", HttpStatusCode.InternalServerError, "DataFileCorrupted",
+        "Файл данных поврежден. Невозможно сохранить изменения.", new[] { ex.Message });
+    }
   })
   .WithName("updateMackerel");
 
 app.MapDelete("/Mackerel/{id:int}", async (int id, FishRepository repository) =>
   {
-    var removed = await repository.DeleteMackerelAsync(id);
-    if (removed)
+    try
     {
-      var ok = new { message = "Удалено" };
-      return ValidateResponse(validator, serializerOptions, "deleteMackerel", HttpMethod.Delete, "/Mackerel/{id}", ok, HttpStatusCode.OK, () => Results.Ok(ok));
-    }
+      var removed = await repository.DeleteMackerelAsync(id);
+      if (removed)
+      {
+        var ok = new { message = "Удалено" };
+        return ValidateResponse(validator, serializerOptions, "deleteMackerel", HttpMethod.Delete, "/Mackerel/{id}", ok, HttpStatusCode.OK, () => Results.Ok(ok));
+      }
 
-    return BuildErrorResponse(validator, serializerOptions, "deleteMackerel", HttpMethod.Delete, "/Mackerel/{id}", HttpStatusCode.NotFound, "NotFound", "Объект не найден");
+      return BuildErrorResponse(validator, serializerOptions, "deleteMackerel", HttpMethod.Delete, "/Mackerel/{id}", HttpStatusCode.NotFound, "NotFound", "Объект не найден");
+    }
+    catch (DataFileCorruptedException ex)
+    {
+      return BuildErrorResponse(validator, serializerOptions, "deleteMackerel", HttpMethod.Delete, "/Mackerel/{id}", HttpStatusCode.InternalServerError, "DataFileCorrupted",
+        "Файл данных поврежден. Невозможно сохранить изменения.", new[] { ex.Message });
+    }
   })
   .WithName("deleteMackerel");
 
