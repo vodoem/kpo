@@ -178,6 +178,11 @@ public class FishApiClient
 
     if (!allowedStatuses.Contains(response.StatusCode))
     {
+      if (TryBuildErrorMessage(responseBody, out var errorMessage))
+      {
+        throw new InvalidOperationException(errorMessage);
+      }
+
       throw new InvalidOperationException($"Ожидался статус [{string.Join(", ", allowedStatuses)}], получено {response.StatusCode}: {responseBody}");
     }
 
@@ -198,6 +203,35 @@ public class FishApiClient
       throw new InvalidOperationException($"OpenAPI validation failed for {direction} {operationId} ({path}): {result.ErrorMessage}");
     }
   }
+
+  private bool TryBuildErrorMessage(string responseBody, out string? message)
+  {
+    message = null;
+    if (string.IsNullOrWhiteSpace(responseBody))
+    {
+      return false;
+    }
+
+    try
+    {
+      var error = JsonSerializer.Deserialize<ErrorResponse>(responseBody, _serializerOptions);
+      if (error == null)
+      {
+        return false;
+      }
+
+      var details = error.Errors is { Length: > 0 }
+        ? $"{error.Description} ({string.Join("; ", error.Errors)})"
+        : error.Description;
+
+      message = string.IsNullOrWhiteSpace(details) ? null : details;
+      return !string.IsNullOrWhiteSpace(message);
+    }
+    catch (JsonException)
+    {
+      return false;
+    }
+  }
 }
 
 /// <summary>
@@ -205,3 +239,11 @@ public class FishApiClient
 /// </summary>
 /// <param name="Message">Текст сообщения.</param>
 public record ServerMessage(string? Message);
+
+/// <summary>
+/// Ошибка, возвращаемая сервером.
+/// </summary>
+/// <param name="Code">Код ошибки.</param>
+/// <param name="Description">Описание ошибки.</param>
+/// <param name="Errors">Дополнительные детали.</param>
+public record ErrorResponse(string? Code, string? Description, string[]? Errors);

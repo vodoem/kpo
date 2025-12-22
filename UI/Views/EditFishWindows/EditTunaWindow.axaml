@@ -16,6 +16,16 @@
   <Grid Margin="16" RowDefinitions="* auto auto">
     <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
       <StackPanel Spacing="8">
+        <!-- Идентификатор -->
+        <StackPanel>
+          <TextBlock Margin="0,0,0,1" Text="Идентификатор" />
+          <TextBox
+            IsEnabled="False"
+            IsReadOnly="True"
+            Text="{Binding FishInstance.Id}"
+            Watermark="Идентификатор" />
+        </StackPanel>
+
         <!-- Вес -->
         <StackPanel>
           <TextBlock Margin="0,0,0,1" Text="Вес (г)" />
