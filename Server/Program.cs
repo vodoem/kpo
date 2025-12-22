@@ -44,6 +44,22 @@ app.Use(async (context, next) =>
   app.Logger.LogInformation("Response {StatusCode} for {Method} {Path}", context.Response.StatusCode, context.Request.Method, context.Request.Path);
 });
 
+app.Use(async (context, next) =>
+{
+  try
+  {
+    await next();
+  }
+  catch (DataFileCorruptedException ex)
+  {
+    app.Logger.LogError(ex, "Файл данных повреждён.");
+    var payload = CreateErrorPayload("DataFileCorrupted", "Файл данных повреждён. Исправьте файл и повторите запрос.",
+      new[] { ex.InnerException?.Message ?? ex.Message });
+    context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+    await context.Response.WriteAsJsonAsync(payload, serializerOptions);
+  }
+});
+
 app.MapGet("/list", async (FishRepository repository) =>
   {
     var collections = await repository.GetCollectionsAsync();
