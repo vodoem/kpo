@@ -30,6 +30,10 @@
           Content="Удалить"
           IsEnabled="{Binding CanEditOrDelete}" />
         <Button Command="{Binding RefreshFromServerCommand}" Content="Обновить с сервера" />
+        <CheckBox
+          VerticalAlignment="Center"
+          Content="Разрешить невалидные запросы"
+          IsChecked="{Binding AllowInvalidRequests, Mode=TwoWay}" />
       </StackPanel>
 
       <Button

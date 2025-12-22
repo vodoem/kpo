@@ -66,6 +66,11 @@ public partial class MainWindowViewModel : ViewModelBase
   private bool _isFilterVisible = true;
 
   /// <summary>
+  /// Разрешить ли отправку невалидных запросов на сервер.
+  /// </summary>
+  private bool _allowInvalidRequests;
+
+  /// <summary>
   /// HTTP-клиент для взаимодействия с сервером.
   /// </summary>
   private readonly FishApiClient _apiClient;
@@ -150,6 +155,21 @@ public partial class MainWindowViewModel : ViewModelBase
   {
     get => _isFilterVisible;
     set => this.RaiseAndSetIfChanged(ref _isFilterVisible, value);
+  }
+
+  /// <summary>
+  /// Разрешить ли отправку невалидных запросов на сервер.
+  /// </summary>
+  public bool AllowInvalidRequests
+  {
+    get => _allowInvalidRequests;
+    set
+    {
+      if (this.RaiseAndSetIfChanged(ref _allowInvalidRequests, value))
+      {
+        _apiClient.ValidateRequests = !value;
+      }
+    }
   }
 
   /// <summary>

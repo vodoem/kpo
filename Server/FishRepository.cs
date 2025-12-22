@@ -12,6 +12,8 @@ public class FishRepository
   private FishCollections _state = new();
   private int _nextId = 1;
   private DateTime? _lastLoadedWriteTimeUtc;
+  private bool _dataCorrupted;
+  private string? _dataCorruptionDetails;
 
   /// <summary>
   /// Создаёт новый экземпляр хранилища.
@@ -20,7 +22,7 @@ public class FishRepository
   public FishRepository(IHostEnvironment environment)
   {
     _storagePath = Path.Combine(environment.ContentRootPath, "fish-data.json");
-    LoadState();
+    TryLoadState(resetState: true);
   }
 
   /// <summary>
@@ -85,6 +87,7 @@ public class FishRepository
     try
     {
       ReloadStateIfChanged();
+      EnsureStorageHealthyForWrite();
       stored.Id = _nextId++;
       _state.Carps.Add(stored);
       await SaveAsync();
@@ -107,6 +110,7 @@ public class FishRepository
     try
     {
       ReloadStateIfChanged();
+      EnsureStorageHealthyForWrite();
       stored.Id = _nextId++;
       _state.Mackerels.Add(stored);
       await SaveAsync();
@@ -130,6 +134,7 @@ public class FishRepository
     try
     {
       ReloadStateIfChanged();
+      EnsureStorageHealthyForWrite();
       var existing = _state.Carps.FirstOrDefault(fish => fish.Id == id);
       if (existing is null)
       {
@@ -158,6 +163,7 @@ public class FishRepository
     try
     {
       ReloadStateIfChanged();
+      EnsureStorageHealthyForWrite();
       var existing = _state.Mackerels.FirstOrDefault(fish => fish.Id == id);
       if (existing is null)
       {
@@ -183,6 +189,7 @@ public class FishRepository
     try
     {
       ReloadStateIfChanged();
+      EnsureStorageHealthyForWrite();
       var removed = _state.Carps.RemoveAll(fish => fish.Id == id) > 0;
       if (removed)
       {
@@ -206,6 +213,7 @@ public class FishRepository
     try
     {
       ReloadStateIfChanged();
+      EnsureStorageHealthyForWrite();
       var removed = _state.Mackerels.RemoveAll(fish => fish.Id == id) > 0;
       if (removed)
       {
@@ -220,19 +228,40 @@ public class FishRepository
     }
   }
 
-  private void LoadState()
+  private void TryLoadState(bool resetState)
   {
     if (!File.Exists(_storagePath))
     {
-      _state = new FishCollections();
+      if (resetState)
+      {
+        _state = new FishCollections();
+      }
+
+      _dataCorrupted = false;
+      _dataCorruptionDetails = null;
+      _lastLoadedWriteTimeUtc = null;
       return;
     }
 
-    var json = File.ReadAllText(_storagePath);
-    var loaded = System.Text.Json.JsonSerializer.Deserialize<FishCollections>(json);
-    _state = loaded ?? new FishCollections();
-    _nextId = _state.Carps.Cast<Fish>().Concat(_state.Mackerels).Select(fish => fish.Id).DefaultIfEmpty(0).Max() + 1;
-    _lastLoadedWriteTimeUtc = File.GetLastWriteTimeUtc(_storagePath);
+    try
+    {
+      var json = File.ReadAllText(_storagePath);
+      var loaded = System.Text.Json.JsonSerializer.Deserialize<FishCollections>(json);
+      _state = loaded ?? new FishCollections();
+      _nextId = _state.Carps.Cast<Fish>().Concat(_state.Mackerels).Select(fish => fish.Id).DefaultIfEmpty(0).Max() + 1;
+      _lastLoadedWriteTimeUtc = File.GetLastWriteTimeUtc(_storagePath);
+      _dataCorrupted = false;
+      _dataCorruptionDetails = null;
+    }
+    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
+    {
+      if (resetState)
+      {
+        _state = new FishCollections();
+      }
+
+      MarkCorrupted(ex);
+    }
   }
 
   private async Task SaveAsync()
@@ -243,25 +272,63 @@ public class FishRepository
       Directory.CreateDirectory(directory);
     }
 
-    var json = System.Text.Json.JsonSerializer.Serialize(_state, new System.Text.Json.JsonSerializerOptions
+    try
     {
-      WriteIndented = true
-    });
-    await File.WriteAllTextAsync(_storagePath, json);
-    _lastLoadedWriteTimeUtc = File.GetLastWriteTimeUtc(_storagePath);
+      var json = System.Text.Json.JsonSerializer.Serialize(_state, new System.Text.Json.JsonSerializerOptions
+      {
+        WriteIndented = true
+      });
+      await File.WriteAllTextAsync(_storagePath, json);
+      _lastLoadedWriteTimeUtc = File.GetLastWriteTimeUtc(_storagePath);
+      _dataCorrupted = false;
+      _dataCorruptionDetails = null;
+    }
+    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+    {
+      MarkCorrupted(ex);
+      throw new DataFileCorruptedException("Не удалось записать файл данных.", ex);
+    }
   }
 
   private void ReloadStateIfChanged()
   {
     if (!File.Exists(_storagePath))
     {
+      if (_dataCorrupted)
+      {
+        _dataCorrupted = false;
+        _dataCorruptionDetails = null;
+        _lastLoadedWriteTimeUtc = null;
+      }
+
       return;
     }
 
     var lastWriteTime = File.GetLastWriteTimeUtc(_storagePath);
     if (_lastLoadedWriteTimeUtc == null || lastWriteTime > _lastLoadedWriteTimeUtc)
     {
-      LoadState();
+      TryLoadState(resetState: false);
+    }
+  }
+
+  private void EnsureStorageHealthyForWrite()
+  {
+    if (_dataCorrupted)
+    {
+      var details = string.IsNullOrWhiteSpace(_dataCorruptionDetails)
+        ? "Файл данных поврежден."
+        : $"Файл данных поврежден: {_dataCorruptionDetails}";
+      throw new DataFileCorruptedException(details);
+    }
+  }
+
+  private void MarkCorrupted(Exception ex)
+  {
+    _dataCorrupted = true;
+    _dataCorruptionDetails = ex.Message;
+    if (File.Exists(_storagePath))
+    {
+      _lastLoadedWriteTimeUtc = File.GetLastWriteTimeUtc(_storagePath);
     }
   }
 
